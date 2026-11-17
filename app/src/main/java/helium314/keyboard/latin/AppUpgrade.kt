@@ -55,7 +55,7 @@ import kotlin.collections.set
 fun checkVersionUpgrade(context: Context) {
     val prefs = context.prefs()
     val oldVersion = prefs.getInt(Settings.PREF_VERSION_CODE, 0)
-    if (oldVersion != BuildConfig.VERSION_CODE)
+    if (oldVersion != BuildConfig.UPSTREAM_VERSION_CODE)
         AppUpgrade.onUpgrade(context)
 }
 
@@ -86,7 +86,7 @@ private object AppUpgrade {
         val oldVersion = prefs.getInt(Settings.PREF_VERSION_CODE, 0)
         if (oldVersion == 0) {
             // fresh install -> no need to upgrade, as this does things like keeping old defaults which is on wanted on actual upgrade
-            prefs.edit { putInt(Settings.PREF_VERSION_CODE, BuildConfig.VERSION_CODE) }
+            prefs.edit { putInt(Settings.PREF_VERSION_CODE, BuildConfig.UPSTREAM_VERSION_CODE) }
             return
         }
         // clear extracted dictionaries, in case updated version contains newer ones
@@ -710,7 +710,7 @@ private object AppUpgrade {
         }
         upgradeToolbarPrefs(prefs)
         LayoutUtilsCustom.onLayoutFileChanged() // just to be sure
-        prefs.edit { putInt(Settings.PREF_VERSION_CODE, BuildConfig.VERSION_CODE) }
+        prefs.edit { putInt(Settings.PREF_VERSION_CODE, BuildConfig.UPSTREAM_VERSION_CODE) }
     }
 
     // old variant for old folder structure

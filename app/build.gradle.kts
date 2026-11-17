@@ -16,6 +16,10 @@ android {
         // CI passes ZT_BUILD_NUMBER (1000 + run number) so every build installs over the last one.
         versionCode = (System.getenv("ZT_BUILD_NUMBER") ?: "1").toInt()
         versionName = "0.1.0"
+        // HeliBoard's settings migrations (AppUpgrade.kt) are keyed to HeliBoard's own version codes,
+        // not ours. Keep this equal to the upstream versionCode we are based on, and raise it when
+        // taking a newer HeliBoard release.
+        buildConfigField("int", "UPSTREAM_VERSION_CODE", "4201")
         ndk {
             abiFilters.clear()
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
