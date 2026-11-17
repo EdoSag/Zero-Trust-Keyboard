@@ -9,11 +9,11 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
     tools:ignore="MissingTranslation">
     <!-- Name of Android spell checker service. The app name should not be translated. -->
-    <string name="spell_checker_service_name">HeliBoard Spell Checker</string>
+    <string name="spell_checker_service_name">ZT Keyboard Spell Checker</string>
     <!-- Title for IME settings screen. The app name should not be translated. -->
-    <string name="ime_settings">HeliBoard Settings</string>
+    <string name="ime_settings">ZT Keyboard Settings</string>
     <!-- Title for the spell checking service settings screen. The app name should not be translated. -->
-    <string name="android_spell_checker_settings">HeliBoard Spell Checker Settings</string>
+    <string name="android_spell_checker_settings">ZT Keyboard Spell Checker Settings</string>
     <!-- Option to provide vibrate/haptic feedback on keypress -->
     <string name="vibrate_on_keypress">Vibrate on keypress</string>
     <!-- Option to provide vibrate/haptic feedback on keypress even in do not disturb mode -->
@@ -801,7 +801,7 @@ New dictionary:
     <!-- github repo link for about screen -->
     <string name="about_github_link">View on GitHub</string>
     <!-- link to the wiki for about screen -->
-    <string name="about_wiki_link">Go to Wiki</string>
+    <string name="about_wiki_link">HeliBoard Wiki</string>
     <!-- description for wiki link -->
     <string name="about_wiki_link_description">The Wiki can be improved by any GitHub user!</string>
     <!-- links to community stuff -->
@@ -813,7 +813,7 @@ New dictionary:
     <!-- license for about screen-->
     <string name="license">Open-source license</string>
     <!-- license link for about screen-->
-    <string name="gnu_gpl">GNU General Public License v3.0</string>
+    <string name="gnu_gpl">GNU AGPL v3.0, based on HeliBoard (GNU GPL v3.0)</string>
     <!-- Button to close a dialog where neither "ok" nor "cancel" are suitable. Preferably 10 characters or less. -->
     <string name="dialog_close">Close</string>
     <!-- Hint for users to tap the languages for settings -->

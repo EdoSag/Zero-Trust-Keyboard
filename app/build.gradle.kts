@@ -10,11 +10,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "helium314.keyboard"
+        applicationId = "dev.sagron.zerotrustkeyboard"
         minSdk = 21
         targetSdk = 37
-        versionCode = 4201
-        versionName = "4.2"
+        // CI passes ZT_BUILD_NUMBER (1000 + run number) so every build installs over the last one.
+        versionCode = (System.getenv("ZT_BUILD_NUMBER") ?: "1").toInt()
+        versionName = "0.1.0"
         ndk {
             abiFilters.clear()
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
@@ -22,14 +23,33 @@ android {
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
 
+    // Release signing, same environment variables as the other Zero-Trust apps.
+    // Without them (local builds) release builds stay unsigned.
+    val ztKeystore = System.getenv("CM_BUILD_DIR")?.let { File(it, "codemagic.keystore") }
+    signingConfigs {
+        if (ztKeystore != null && ztKeystore.exists()) {
+            create("release") {
+                storeFile = ztKeystore
+                storePassword = System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CM_KEY_ALIAS")
+                keyPassword = System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+    val ztSigning = signingConfigs.findByName("release")
+
     buildTypes {
         release {
+            signingConfig = ztSigning
             isMinifyEnabled = true
             isShrinkResources = false
             isDebuggable = false
             isJniDebuggable = false
         }
+        // ZT Keyboard ships this build type: same as release, but users cannot load a closed-source
+        // gesture library into the keyboard. Swipe typing will come from our own open decoder.
         create("nouserlib") { // same as release, but does not allow the user to provide a library
+            signingConfig = ztSigning
             isMinifyEnabled = true
             isShrinkResources = false
             isDebuggable = false
@@ -66,7 +86,7 @@ android {
             }
             variant.outputs.forEach { output ->
                 if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
-                    output.outputFileName = "HeliBoard_${defaultConfig.versionName}-${variant.buildType}.apk"
+                    output.outputFileName = "ZT-Keyboard_${defaultConfig.versionName}-${variant.buildType}.apk"
                 }
             }
         }
