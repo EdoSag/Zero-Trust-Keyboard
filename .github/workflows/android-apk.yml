@@ -1,0 +1,149 @@
+# Builds a signed release APK on every push to main and publishes it as a
+# GitHub Release, so the keyboard can be downloaded and installed without
+# Google Play. Pull requests get the same build as a downloadable artifact (no
+# release) plus the unit tests, which shows a change still works before merge.
+#
+# One-time setup (Settings > Secrets and variables > Actions > New secret):
+#   ANDROID_KEYSTORE_BASE64   the release keystore, base64 encoded
+#   ANDROID_KEYSTORE_PASSWORD its password (store and key use the same one)
+# Every build must be signed with the same keystore, or Android refuses to
+# install an update over the previous version.
+#
+# Release builds use the `nouserlib` build type (no closed-source gesture
+# library can be loaded), see README.md.
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_SLUG: zero-trust-keyboard
+  APP_TITLE: Zero-Trust Keyboard
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          # Robolectric runs the unit tests on Android SDK 36, which needs Java 21.
+          # The app itself still compiles to Java 17 bytecode (app/build.gradle.kts).
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore the release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/codemagic.keystore"
+          elif [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            # Lets a PR still prove the app builds; this APK will not install
+            # over a released one. Releases never use a throwaway key.
+            echo "::warning::Signing secrets not set; signing this PR build with a throwaway key."
+            KEYSTORE_PASSWORD=$(openssl rand -hex 16)
+            echo "::add-mask::$KEYSTORE_PASSWORD"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/codemagic.keystore" -storetype PKCS12 \
+              -alias zerotrust -keyalg RSA -keysize 2048 -validity 1 \
+              -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" -dname "CN=PR build"
+          else
+            echo "::error::Missing signing secrets. Add ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          # app/build.gradle.kts reads these (shared names across the apps).
+          {
+            echo "CM_BUILD_DIR=$RUNNER_TEMP"
+            echo "CM_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "CM_KEY_ALIAS=zerotrust"
+            echo "CM_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Version and build number
+        run: |
+          VERSION=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts)
+          # versionCode must grow with every build so updates install over
+          # the previous APK.
+          BUILD=$((1000 + GITHUB_RUN_NUMBER))
+          {
+            echo "VERSION=$VERSION"
+            echo "BUILD=$BUILD"
+            echo "ZT_BUILD_NUMBER=$BUILD"
+          } >> "$GITHUB_ENV"
+
+      - name: Unit tests
+        # HeliBoard's own CI variant: skips tests known to fail upstream.
+        if: github.event_name == 'pull_request'
+        run: ./gradlew --no-daemon testRunTestsUnitTest
+
+      - name: Build the release APK
+        run: |
+          set -e
+          ./gradlew --no-daemon assembleNouserlib
+          APK="$APP_SLUG-$VERSION-build$BUILD.apk"
+          cp app/build/outputs/apk/nouserlib/*.apk "$APK"
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Build the Google Play bundle
+        # Google Play takes an .aab, not an .apk. Built for releases (and
+        # manual runs) only, so pull request checks stay fast.
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          ./gradlew --no-daemon bundleNouserlib
+          AAB="$APP_SLUG-$VERSION-build$BUILD.aab"
+          cp app/build/outputs/bundle/nouserlib/*.aab "$AAB"
+          echo "AAB=$AAB" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        if: env.AAB != ''
+        with:
+          name: ${{ env.AAB }}
+          path: ${{ env.AAB }}
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK }}
+          path: ${{ env.APK }}
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reports
+          path: '*/build/reports'
+
+      - name: Publish the GitHub Release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$VERSION-build$BUILD"
+          SUBJECT=$(git log -1 --pretty=%s)
+          gh release create "$TAG" "$APK" ${AAB:+"$AAB"} \
+            --target "$GITHUB_SHA" \
+            --title "$APP_TITLE $VERSION (build $BUILD)" \
+            --notes "Latest change: $SUBJECT
+
+          Download **$APK** below and open it on your phone to install or update. Android may ask you to allow installs from this source the first time. Then turn on ZT Keyboard in Settings > System > Keyboard.
+
+          The .aab file is for uploading to the Google Play Console; phones install the .apk." \
+            --latest
