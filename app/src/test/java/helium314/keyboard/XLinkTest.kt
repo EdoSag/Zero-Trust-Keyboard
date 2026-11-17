@@ -69,6 +69,14 @@ class XLinkTest { // Without the X, SubtypeTests fail with ClassCastException. W
     }
 
     private fun checkLink(link: String) {
+        // Links into this repository's main branch only go live when Dev is released to main,
+        // so check that the file exists in this checkout instead of asking GitHub.
+        val ownPrefix = Links.GITHUB + "/blob/main/"
+        if (link.startsWith(ownPrefix)) {
+            val path = link.removePrefix(ownPrefix).substringBefore('#')
+            assert(File("../$path").exists()) { "missing file for link $link" }
+            return
+        }
         if (link.contains("wiki/"))
             return checkWikiLink(link)
         val url = URL(link)
