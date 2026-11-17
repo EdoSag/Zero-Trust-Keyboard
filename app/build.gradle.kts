@@ -112,6 +112,10 @@ android {
         }
     }
 
+    // AGP 9 only creates unit test tasks for the tested build type. Use HeliBoard's CI variant
+    // (skips tests known to fail and the ones that call the network), so testRunTestsUnitTest exists.
+    testBuildType = "runTests"
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
