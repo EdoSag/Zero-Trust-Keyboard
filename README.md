@@ -4,12 +4,27 @@ A private Android keyboard for the Zero-Trust suite. Store name **Zero-Trust Key
 launcher name **ZT Keyboard**.
 
 Everything you type stays on your phone. Word prediction, autocorrect and learning run on the
-device, and the keyboard has no internet permission. Hebrew and English are first-class,
-including typing both in one sentence.
+device, and the keyboard itself never uses the internet. Hebrew and English are first-class
+and both are on by default, including typing both in one sentence.
 
 Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-device voice
 typing, on-device translation, and optional end-to-end encrypted sync of your personal
 dictionary through your Zero-Trust account.
+
+## Two editions
+
+| | ZT Keyboard | ZT Keyboard Offline |
+|---|---|---|
+| App id | `dev.sagron.zerotrustkeyboard` | `dev.sagron.zerotrustkeyboard.offline` |
+| The keyboard | yes | yes, the same one |
+| ZT app around it (setup, optional Zero-Trust account, app lock, shared settings) | yes | no |
+| `INTERNET` permission | yes, for the account only | **no** |
+| Launcher icon opens | the ZT app | the keyboard's settings |
+
+The keyboard is a native Android service (`android/`, Kotlin/Java/C++). The ZT app is Flutter
+on [Zero-Trust-Core](https://github.com/EdoSag/Zero-Trust-Core) (`lib/`) and lives only in
+the full edition; the Offline edition contains no Flutter code at all. The two can be
+installed side by side.
 
 ## Based on HeliBoard
 
@@ -23,22 +38,43 @@ diff between the two upstream tags, for example:
 
 ```
 git clone https://github.com/HeliBorg/HeliBoard /tmp/heliboard
-git -C /tmp/heliboard diff v4.2 v4.3 | git apply -3
+git -C /tmp/heliboard diff v4.2 v4.3 | git apply -3 --directory=android
 ```
 
 Java/Kotlin package names (`helium314.keyboard...`) are kept on purpose so upstream diffs keep
 applying; the app id is `dev.sagron.zerotrustkeyboard`.
 
-Release builds use the `nouserlib` build type: users cannot load a closed-source gesture
-library into the keyboard. Swipe typing will come from our own open decoder (phase K2).
+Users cannot load a closed-source gesture library into the keyboard
+(`BuildConfig.ALLOW_USER_LIB` is off). Swipe typing will come from our own open decoder
+(phase K2).
+
+HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
+in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
 ## Building
 
-Branches: work happens on `Dev`; `main` holds releases. Every push to `main` builds a signed
-APK and a Google Play bundle and publishes them as a GitHub Release
-(`.github/workflows/android-apk.yml`). Pull requests get a test build.
+Branches: work happens on `Dev`; `main` holds releases. Every push to `main` builds both
+editions, signed, plus a Google Play bundle of the full edition, and publishes them as a
+GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
+keyboard's unit tests and the app's widget tests.
 
-Local build: `./gradlew assembleNouserlib` (needs the Android SDK and NDK).
+Local builds need Flutter 3.47.9, the Android SDK and NDK, and a `.env` with `SUPABASE_URL`
+and `SUPABASE_ANON_KEY`. The app version is the `version:` line of `pubspec.yaml`.
+
+```
+# Full edition
+flutter build apk --release --flavor full
+
+# Offline edition (run the line above, or `flutter pub get` plus
+# `flutter build apk --config-only --flavor full`, once first: it writes android/local.properties)
+cd android && ./gradlew -PztOffline :app:assembleOfflineRelease
+
+# The keyboard's unit tests
+cd android && ./gradlew -PztOffline :app:testOfflineRunTestsUnitTest
+```
+
+The edition is chosen by the `ztOffline` Gradle property, not by a flavor picker, because the
+Flutter Gradle plugin cannot be left out of one flavor only.
 
 ## License
 
