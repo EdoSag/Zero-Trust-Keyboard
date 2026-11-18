@@ -12,19 +12,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # whisper.cpp release, fetched at build time. To take a newer release change the tag and
-# the hash together (sha256 of the tag's source archive).
+# the hash together (sha256 of the tag's source archive). A build stops when the archive differs.
 set(ZT_WHISPER_TAG "v1.8.3")
-set(ZT_WHISPER_SHA256 "" CACHE STRING "sha256 of the whisper.cpp source archive")
+set(ZT_WHISPER_SHA256 "870ba21409cdf66697dc4db15ebdb13bc67037d76c7cc63756c81471d8f1731a")
 
 include(FetchContent)
-if(ZT_WHISPER_SHA256)
-    FetchContent_Declare(whisper
-        URL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/${ZT_WHISPER_TAG}.tar.gz"
-        URL_HASH "SHA256=${ZT_WHISPER_SHA256}")
-else()
-    FetchContent_Declare(whisper
-        URL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/${ZT_WHISPER_TAG}.tar.gz")
-endif()
+FetchContent_Declare(whisper
+    URL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/${ZT_WHISPER_TAG}.tar.gz"
+    URL_HASH "SHA256=${ZT_WHISPER_SHA256}")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
