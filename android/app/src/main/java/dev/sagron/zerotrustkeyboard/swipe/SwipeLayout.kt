@@ -25,8 +25,18 @@ class SwipeLayout(keys: List<SwipeKey>, /** Width of a typical letter key, the u
         }
     }
 
-    /** The key for [c], or -1 when the layout has no key for it (apostrophe, hyphen, digits). */
-    fun keyOf(c: Char): Int = index[c] ?: -1
+    /**
+     * The key for [c]. A letter with an accent that has no key of its own is on its base
+     * letter's key ("é" on "e"). -1 when the layout has no key for it at all.
+     */
+    fun keyOf(c: Char): Int {
+        index[c]?.let { return it }
+        if (c.code <= 0x7F) return -1
+        val key = index[SwipeLexicon.baseOf(c)] ?: -1
+        // Remember it: the same few letters are asked for with every swipe.
+        index[c] = key
+        return key
+    }
 
     fun charAt(key: Int): Char = chars[key]
 

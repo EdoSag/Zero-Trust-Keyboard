@@ -11,7 +11,7 @@ import java.util.Locale
  */
 class SwipeLexicon private constructor(
     private val words: Array<String>,
-    /** The keys to pass, in order: lowercase, accents removed, doubled letters once. */
+    /** The letters to pass, in order: lowercase, letters only, doubled letters once. */
     private val traces: Array<String>,
     /** 0..255, the dictionary's own scale (logarithmic: 15 steps is about ten times rarer). */
     private val frequencies: ByteArray,
@@ -23,8 +23,12 @@ class SwipeLexicon private constructor(
     fun trace(id: Int): String = traces[id]
     fun frequency(id: Int): Int = frequencies[id].toInt() and 0xFF
 
-    /** Ids of the words whose trace starts with [first] and ends with [last]. */
-    fun candidates(first: Char, last: Char): IntArray = buckets[bucketKey(first, last)] ?: EMPTY
+    /**
+     * Ids of the words whose trace starts with [first] and ends with [last]. Accents are
+     * ignored here ("s" also finds words starting with "ş"), because whether a letter has a
+     * key of its own depends on the layout.
+     */
+    fun candidates(first: Char, last: Char): IntArray = buckets[bucketKey(baseOf(first), baseOf(last))] ?: EMPTY
 
     class Builder(private val locale: Locale) {
         private val byWord = HashMap<String, Int>()
@@ -50,7 +54,7 @@ class SwipeLexicon private constructor(
                 // Most words are their own trace; share the string then.
                 traces.add(if (trace == word) word else trace)
                 frequencies.add(frequency)
-                bucketLists.getOrPut(bucketKey(trace.first(), trace.last())) { ArrayList() }.add(id)
+                bucketLists.getOrPut(bucketKey(baseOf(trace.first()), baseOf(trace.last()))) { ArrayList() }.add(id)
             }
             val buckets = HashMap<Int, IntArray>(bucketLists.size * 2)
             for ((key, ids) in bucketLists) buckets[key] = ids.toIntArray()
@@ -64,20 +68,18 @@ class SwipeLexicon private constructor(
     companion object {
         const val MAX_WORD_LENGTH = 40
         private val EMPTY = IntArray(0)
-        private val MARKS = Regex("\\p{Mn}+")
 
         private fun bucketKey(first: Char, last: Char): Int = (first.code shl 16) or last.code
 
         /**
-         * The letters a finger passes for [word]: lowercase, without accents (they sit on
-         * the base letter's key), without characters that are not letters (apostrophe,
-         * hyphen), and with a doubled letter once, because the finger does not leave the key.
+         * The letters a finger passes for [word]: lowercase, without characters that are
+         * not letters (apostrophe, hyphen, vowel points), and with a doubled letter once,
+         * because the finger does not leave the key. Accented letters are kept: some layouts
+         * have a key for them, on the others [SwipeLayout.keyOf] uses the base letter's key.
          */
         fun traceOf(word: String, locale: Locale): String {
             var s = word.lowercase(locale)
-            if (s.any { it.code > 0x7F }) {
-                s = MARKS.replace(Normalizer.normalize(s, Normalizer.Form.NFD), "")
-            }
+            if (s.any { it.code > 0x7F }) s = Normalizer.normalize(s, Normalizer.Form.NFC)
             val out = StringBuilder(s.length)
             for (c in s) {
                 if (!Character.isLetter(c)) continue
@@ -85,6 +87,13 @@ class SwipeLexicon private constructor(
                 out.append(c)
             }
             return out.toString()
+        }
+
+        /** The letter without its accent: "é" gives "e", "ş" gives "s". */
+        fun baseOf(c: Char): Char {
+            if (c.code <= 0x7F) return c
+            val base = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)[0]
+            return if (Character.isLetter(base)) base else c
         }
     }
 }

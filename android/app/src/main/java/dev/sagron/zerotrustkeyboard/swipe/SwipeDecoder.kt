@@ -54,6 +54,12 @@ class SwipeDecoder {
         val endKeys = layout.keysNear(inX[POINTS - 1], inY[POINTS - 1], kw * END_RADIUS_KEYS)
         if (startKeys.isEmpty() || endKeys.isEmpty()) return emptyList()
 
+        // Keys that differ only by an accent ("s" and "ş") lead to the same words: look once.
+        val endPairs = LinkedHashSet<Int>()
+        for (s in startKeys) for (e in endKeys) {
+            endPairs.add((SwipeLexicon.baseOf(layout.charAt(s)).code shl 16) or SwipeLexicon.baseOf(layout.charAt(e)).code)
+        }
+
         // Stage 1: shape distance for every word with fitting ends and length.
         val shortlist = ArrayList<Scored>(SHORTLIST + 1)
         var worst = Float.MAX_VALUE
@@ -61,8 +67,8 @@ class SwipeDecoder {
         val maxLen = length * MAX_LENGTH_RATIO + kw * LENGTH_SLACK_KEYS
         for (l in lexicons.indices) {
             val lexicon = lexicons[l]
-            for (s in startKeys) for (e in endKeys) {
-                for (id in lexicon.candidates(layout.charAt(s), layout.charAt(e))) {
+            for (pair in endPairs) {
+                for (id in lexicon.candidates((pair ushr 16).toChar(), (pair and 0xFFFF).toChar())) {
                     val m = polyline(lexicon.trace(id), layout)
                     if (m < 2) continue
                     val wordLength = polylineLength(m)
@@ -86,7 +92,6 @@ class SwipeDecoder {
 
         // Stage 2: every letter must be passed, in order; then weigh in how common the word is.
         val results = ArrayList<SwipeCandidate>(shortlist.size)
-        val seen = HashSet<String>()
         for (entry in shortlist) {
             val lexicon = lexicons[entry.lexicon]
             val m = polyline(lexicon.trace(entry.id), layout)
@@ -97,11 +102,17 @@ class SwipeDecoder {
                 sq(inX[POINTS - 1] - polyX[m - 1], inY[POINTS - 1] - polyY[m - 1])) / (kw * kw)
             val score = -(SHAPE_WEIGHT * entry.cost + LETTER_WEIGHT * letters + END_WEIGHT * ends) +
                 FREQUENCY_WEIGHT * frequency + LEXICON_WEIGHT * (weight - 1f)
-            val word = lexicon.word(entry.id)
-            if (seen.add(word)) results.add(SwipeCandidate(word, score, frequency, entry.lexicon))
+            results.add(SwipeCandidate(lexicon.word(entry.id), score, frequency, entry.lexicon))
         }
         results.sortByDescending { it.score }
-        return if (results.size > maxResults) results.subList(0, maxResults) else results
+        // A word that is in several lexicons is offered once, with its best score.
+        val seen = HashSet<String>()
+        val unique = ArrayList<SwipeCandidate>(maxResults)
+        for (candidate in results) {
+            if (seen.add(candidate.word)) unique.add(candidate)
+            if (unique.size == maxResults) break
+        }
+        return unique
     }
 
     /** Fills [polyX]/[polyY] with the key centres of [trace]; returns how many. */

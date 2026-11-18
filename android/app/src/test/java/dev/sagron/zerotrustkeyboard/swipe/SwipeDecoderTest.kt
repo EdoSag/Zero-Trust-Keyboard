@@ -67,10 +67,15 @@ class SwipeDecoderTest {
         return SwipeDecoder().decode(xs, ys, xs.size, layout, lexicons.toList()).map { it.word }
     }
 
-    @Test fun traceIsLowercaseWithoutAccentsPunctuationOrDoubledLetters() {
+    @Test fun traceIsLowercaseLettersWithoutDoubledLetters() {
         assertEquals("helo", SwipeLexicon.traceOf("Hello", Locale.US))
         assertEquals("dont", SwipeLexicon.traceOf("don't", Locale.US))
-        assertEquals("cafe", SwipeLexicon.traceOf("café", Locale.US))
+        assertEquals("café", SwipeLexicon.traceOf("café", Locale.US))
+        assertEquals("café", SwipeLexicon.traceOf("cafe\u0301", Locale.US))
+        assertEquals("שלום", SwipeLexicon.traceOf("שָׁלוֹם", Locale.forLanguageTag("he")))
+        assertEquals('e', SwipeLexicon.baseOf('é'))
+        assertEquals('s', SwipeLexicon.baseOf('ş'))
+        assertEquals('ש', SwipeLexicon.baseOf('ש'))
         assertEquals("welknown", SwipeLexicon.traceOf("well-known", Locale.US))
         assertEquals("שלום", SwipeLexicon.traceOf("שלום", Locale.forLanguageTag("he")))
         assertEquals("", SwipeLexicon.traceOf("123", Locale.US))
@@ -131,6 +136,28 @@ class SwipeDecoderTest {
         assertEquals("world", decode("world", qwerty, english, german).first())
         // In both lexicons: offered once.
         assertEquals(1, decode("hello", qwerty, english, german).count { it == "hello" })
+    }
+
+    @Test fun lettersWithTheirOwnKeyAreSwipedOnThatKey() {
+        // Turkish has a key for ş far from s, and for ı next to i.
+        val turkish = layout("qwertyuıopğü" to 0f, "asdfghjklşi" to 0.5f, "zxcvbnmöç" to 1.5f)
+        val words = lexicon(Locale.forLanguageTag("tr"), "şiş" to 120, "sis" to 120, "kış" to 130, "kis" to 90, "göz" to 140)
+        assertEquals("şiş", decode("şiş", turkish, words).first())
+        assertEquals("sis", decode("sis", turkish, words).first())
+        assertEquals("kış", decode("kış", turkish, words).first())
+        assertEquals("göz", decode("göz", turkish, words).first())
+        // The same words on a keyboard without those keys: swiped on the base letters.
+        assertTrue("göz" in decode("goz", qwerty, words))
+    }
+
+    @Test fun wordInTwoLexiconsKeepsItsBestScore() {
+        // "hello" is rare in the first lexicon and common in the learned words.
+        val learned = lexicon(Locale.US, "hello" to 250)
+        val (xs, ys) = swipe("hello", qwerty)
+        val alone = SwipeDecoder().decode(xs, ys, xs.size, qwerty, listOf(english)).first { it.word == "hello" }
+        val both = SwipeDecoder().decode(xs, ys, xs.size, qwerty, listOf(english, learned)).first { it.word == "hello" }
+        assertTrue(both.score > alone.score)
+        assertEquals(1, both.lexicon)
     }
 
     @Test fun nothingForATapOrAKeyboardWithoutLetters() {
