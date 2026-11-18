@@ -54,7 +54,8 @@ class RichInputMethodManager private constructor() {
 
     private var shortcuts = listOf<Shortcut>()
 
-    val isShortcutImeReady get() = shortcuts.isNotEmpty()
+    // ZT Keyboard has its own voice typing, so the microphone key never depends on another keyboard.
+    val isShortcutImeReady get() = true
 
     fun getEnabledInputMethodSubtypes(imi: InputMethodInfo, allowsImplicitlySelectedSubtypes: Boolean) =
         inputMethodInfoCache.getEnabledInputMethodSubtypeList(imi, allowsImplicitlySelectedSubtypes)

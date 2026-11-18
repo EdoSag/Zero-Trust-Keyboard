@@ -552,4 +552,34 @@
     <string name="show_dpad_key">מקש D-pad (מקשי כיוון)</string>
     <string name="accent_shifted_icon">סמל shift מודגש</string>
     <string name="prefs_enable_hardware_keyboard">תמיכה במקלדת חומרה</string>
+
+    <!-- ZT Keyboard: voice typing -->
+    <string name="zt_voice_title">"הקלדה קולית"</string>
+    <string name="zt_voice_intro">"לוחצים על מקש המיקרופון ומדברים. הקול הופך לטקסט בטלפון הזה. הצליל לא נשמר ולא יוצא מהטלפון."</string>
+    <string name="zt_voice_listening">"מקשיב…"</string>
+    <string name="zt_voice_listening_time">"מקשיב… %1$d:%2$02d"</string>
+    <string name="zt_voice_working">"כותב…"</string>
+    <string name="zt_voice_done">"סיום"</string>
+    <string name="zt_voice_cancel">"ביטול"</string>
+    <string name="zt_voice_needs_model">"יש להוסיף מודל דיבור כדי להשתמש בהקלדה קולית"</string>
+    <string name="zt_voice_not_supported">"הקלדה קולית לא פועלת בטלפון הזה"</string>
+    <string name="zt_voice_no_microphone">"לא ניתן להשתמש במיקרופון"</string>
+    <string name="zt_voice_nothing_heard">"לא נשמע דבר"</string>
+    <string name="zt_voice_failed">"ההקלדה הקולית נכשלה, נסו שוב"</string>
+    <string name="zt_voice_microphone">"מיקרופון"</string>
+    <string name="zt_voice_microphone_allowed">"מותר"</string>
+    <string name="zt_voice_microphone_ask">"הקישו כדי לאפשר למקלדת להשתמש במיקרופון"</string>
+    <string name="zt_voice_microphone_denied">"לא מותר. הקישו כדי לפתוח את הרשאות האפליקציה"</string>
+    <string name="zt_voice_models">"מודלים של דיבור"</string>
+    <string name="zt_voice_no_models">"עדיין אין מודל דיבור. הקלדה קולית צריכה מודל."</string>
+    <string name="zt_voice_model_size">"%1$d MB"</string>
+    <string name="zt_voice_model_in_use">"בשימוש"</string>
+    <string name="zt_voice_add_model">"הוספת מודל דיבור מקובץ"</string>
+    <string name="zt_voice_add_model_summary">"מודל Whisper בפורמט ggml (קובץ ‎.bin‏, כמו ב-whisper.cpp). מודלים גדולים מבינים טוב יותר ולוקחים יותר זמן."</string>
+    <string name="zt_voice_copying">"מעתיק… %1$d MB"</string>
+    <string name="zt_voice_not_a_model">"הקובץ הזה אינו מודל דיבור של Whisper בפורמט ggml"</string>
+    <string name="zt_voice_copy_failed">"לא ניתן להעתיק את הקובץ"</string>
+    <string name="zt_voice_delete_model">"למחוק את %1$s?"</string>
+    <string name="zt_voice_stop_on_pause">"עצירה כשאני משתתק"</string>
+    <string name="zt_voice_stop_on_pause_summary">"סיום אוטומטי אחרי כמה שניות של שקט"</string>
 </resources>

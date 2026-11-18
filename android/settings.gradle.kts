@@ -33,6 +33,8 @@ plugins {
 }
 
 include(":app")
+// whisper.cpp for voice typing, native code only.
+include(":whisper")
 if (!providers.gradleProperty("ztOffline").isPresent) {
     apply(plugin = "dev.flutter.flutter-plugin-loader")
 }

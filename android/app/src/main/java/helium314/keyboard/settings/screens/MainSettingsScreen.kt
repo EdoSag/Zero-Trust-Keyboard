@@ -36,6 +36,7 @@ fun MainSettingsScreen(
     onClickPreferences: () -> Unit,
     onClickToolbar: () -> Unit,
     onClickGestureTyping: () -> Unit,
+    onClickVoiceTyping: () -> Unit,
     onClickDataGathering: () -> Unit,
     onClickAdvanced: () -> Unit,
     onClickAppearance: () -> Unit,
@@ -81,6 +82,11 @@ fun MainSettingsScreen(
                         onClick = onClickGestureTyping,
                         icon = R.drawable.ic_settings_gesture
                     ) { NextScreenIcon() }
+                Preference(
+                    name = stringResource(R.string.zt_voice_title),
+                    onClick = onClickVoiceTyping,
+                    icon = R.drawable.sym_keyboard_voice_rounded
+                ) { NextScreenIcon() }
                 // we don't even show the menu if data gathering phase ended more than 2 weeks ago
                 if (JniUtils.sHaveGestureLib && System.currentTimeMillis() < END_DATE_EPOCH_MILLIS + TWO_WEEKS_IN_MILLIS)
                     Preference(
@@ -124,7 +130,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

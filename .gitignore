@@ -9,6 +9,7 @@ build
 /android/app/build
 /android/app/release
 /android/app/.cxx
+/android/whisper/.cxx
 /android/app/.attach_*
 fastlane/Appfile
 /android/tools/*.txt

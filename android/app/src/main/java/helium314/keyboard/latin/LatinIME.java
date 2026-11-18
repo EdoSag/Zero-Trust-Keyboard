@@ -145,6 +145,9 @@ public class LatinIME extends InputMethodService implements
 
     private RichInputMethodManager mRichImm;
     final KeyboardSwitcher mKeyboardSwitcher;
+    private final dev.sagron.zerotrustkeyboard.voice.VoiceTyping mVoiceTyping =
+            new dev.sagron.zerotrustkeyboard.voice.VoiceTyping(this);
+    public dev.sagron.zerotrustkeyboard.voice.VoiceTyping getVoiceTyping() { return mVoiceTyping; }
     private final SubtypeState mSubtypeState = new SubtypeState((InputMethodSubtype subtype) -> { switchToSubtype(subtype); return Unit.INSTANCE; });
     private final StatsUtilsManager mStatsUtilsManager;
     // Working variable for {@link #startShowingInputView()} and
@@ -705,6 +708,8 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
+        mVoiceTyping.cancel();
+        dev.sagron.zerotrustkeyboard.voice.VoiceEngine.INSTANCE.release();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
@@ -1031,6 +1036,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onWindowHidden() {
         super.onWindowHidden();
+        mVoiceTyping.cancel();
         Log.i(TAG, "onWindowHidden");
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
@@ -1052,6 +1058,7 @@ public class LatinIME extends InputMethodService implements
 
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
+        mVoiceTyping.cancel();
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
     }
@@ -1429,7 +1436,8 @@ public class LatinIME extends InputMethodService implements
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
-            mRichImm.switchToShortcutIme(this);
+            // ZT Keyboard's own voice typing, on the device (HeliBoard switched to another keyboard here).
+            mVoiceTyping.onVoiceKey();
         }
         final InputTransaction completeInputTransaction =
                 mInputLogic.onCodeInput(mSettings.getCurrent(), event,

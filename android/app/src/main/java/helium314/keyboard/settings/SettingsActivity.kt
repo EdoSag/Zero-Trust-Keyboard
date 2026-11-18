@@ -88,6 +88,9 @@ open class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         settingsContainer = SettingsContainer(this)
 
         val spellchecker = intent?.getBooleanExtra("spellchecker", false) ?: false
+        // The keyboard can open one screen directly (voice typing, when no speech model is installed).
+        val startScreen = intent?.getStringExtra(dev.sagron.zerotrustkeyboard.voice.VoiceTyping.EXTRA_SCREEN)
+            ?.takeIf { it == SettingsDestination.VoiceTyping }
 
         val cv = ComposeView(context = this)
         setContentView(cv)
@@ -118,7 +121,7 @@ open class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
                             }
                         }
                     else {
-                        SettingsNavHost(onClickBack = { this.finish() })
+                        SettingsNavHost(onClickBack = { this.finish() }, startDestination = startScreen)
                         if (showWelcomeWizard) {
                             WelcomeWizard(close = { showWelcomeWizard = false }, finish = this::finish)
                         } else if (crashReports.isNotEmpty()) {

@@ -185,6 +185,9 @@ if (!ztOffline) {
 }
 
 dependencies {
+    // voice typing engine (whisper.cpp), see ../whisper
+    implementation(project(":whisper"))
+
     // androidx
     implementation("androidx.core:core-ktx:1.17.0") // 1.18.0 requires minSdk 23
     implementation("androidx.recyclerview:recyclerview:1.4.0")
