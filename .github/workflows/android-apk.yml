@@ -146,12 +146,8 @@ jobs:
             fi
           fi
           if [ -n "$problem" ]; then
-            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-              echo "::warning::$problem This test build has no Hebrew suggestions."
-            else
-              echo "::error::$problem"
-              exit 1
-            fi
+            echo "::error::$problem"
+            exit 1
           fi
 
       - name: Build the full edition APK
@@ -205,6 +201,8 @@ jobs:
           grep -q "android.permission.INTERNET" full-permissions.txt || fail "The full edition is missing the INTERNET permission."
           grep -q "libflutter.so" full-files.txt || fail "The full edition is missing the ZT app."
           grep -q "libjni_latinime.so" full-files.txt || fail "The full edition is missing the keyboard engine."
+          grep -q "assets/dicts/main_he.dict" offline-files.txt || fail "The Offline edition is missing the Hebrew dictionary."
+          grep -q "assets/dicts/main_he.dict" full-files.txt || fail "The full edition is missing the Hebrew dictionary."
           echo "Both editions contain what they should."
 
       - uses: actions/upload-artifact@v4
