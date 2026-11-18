@@ -124,7 +124,9 @@ jobs:
         run: |
           TAG=$(sed -nE 's/^set\(ZT_WHISPER_TAG "([^"]+)"\).*/\1/p' android/whisper/src/main/cpp/CMakeLists.txt)
           echo "whisper.cpp $TAG"
-          curl -sSfL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/$TAG.tar.gz" | sha256sum
+          HASH=$(curl -sSfL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/$TAG.tar.gz" | sha256sum | cut -d' ' -f1)
+          echo "$HASH"
+          echo "WHISPER_ARCHIVE=$TAG $HASH" >> "$GITHUB_ENV"
 
       - name: Analyze and test the ZT app
         run: |
@@ -186,6 +188,7 @@ jobs:
           grep -q "libzt_whisper.so" full-files.txt || fail "The full edition is missing the voice typing engine."
           grep "libzt_whisper.so" full-files.txt
           echo "Both editions contain what they should."
+          echo "whisper.cpp source archive: $WHISPER_ARCHIVE"
 
       - uses: actions/upload-artifact@v4
         if: env.AAB != ''

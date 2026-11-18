@@ -38,22 +38,47 @@ object VoiceModels {
         directory(context).listFiles { file -> file.isFile && file.name.endsWith(EXTENSION) }
             ?.sortedBy { it.name } ?: emptyList()
 
-    /** The model voice typing uses: the chosen one, or the only one. */
-    fun active(context: Context): File? {
-        val models = installed(context)
-        val chosen = context.prefs().getString(PREF_ACTIVE_MODEL, null)
-        return models.firstOrNull { it.name == chosen } ?: models.firstOrNull()
+    /** The pick among the models for every language is kept under [PREF_ACTIVE_MODEL]; the pick
+     *  among the models tuned for one language under that name plus "_" and the language. */
+    private fun prefKey(language: String?) = if (language == null) PREF_ACTIVE_MODEL else PREF_ACTIVE_MODEL + "_" + language
+
+    private fun chosen(context: Context, models: List<File>): Map<String, String> {
+        val prefs = context.prefs()
+        val picks = HashMap<String, String>()
+        for (language in models.map { VoiceCatalog.languageOf(it.name) }.distinct())
+            prefs.getString(prefKey(language), null)?.let { picks[language ?: ""] = it }
+        return picks
     }
 
+    /**
+     * The model voice typing uses for speech in [language] (a Whisper code, or "auto"):
+     * one tuned for the language when there is one, else the chosen model for every language.
+     */
+    fun forLanguage(context: Context, language: String): File? {
+        val models = installed(context)
+        val name = VoiceCatalog.choose(models.map { it.name }, chosen(context, models), language)
+        return models.firstOrNull { it.name == name }
+    }
+
+    /** The names of the models in use: one for every language, and one per tuned language. */
+    fun inUse(context: Context): Set<String> {
+        val models = installed(context)
+        return VoiceCatalog.picks(models.map { it.name }, chosen(context, models))
+    }
+
+    /** True when there is a model to type with at all. */
+    fun any(context: Context): Boolean = installed(context).isNotEmpty()
+
     fun setActive(context: Context, model: File) {
-        context.prefs().edit { putString(PREF_ACTIVE_MODEL, model.name) }
+        context.prefs().edit { putString(prefKey(VoiceCatalog.languageOf(model.name)), model.name) }
     }
 
     fun delete(context: Context, model: File) {
         VoiceEngine.release()
         model.delete()
-        if (context.prefs().getString(PREF_ACTIVE_MODEL, null) == model.name)
-            context.prefs().edit { remove(PREF_ACTIVE_MODEL) }
+        val key = prefKey(VoiceCatalog.languageOf(model.name))
+        if (context.prefs().getString(key, null) == model.name)
+            context.prefs().edit { remove(key) }
     }
 
     fun isModelHeader(bytes: ByteArray, count: Int): Boolean =

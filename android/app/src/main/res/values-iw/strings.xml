@@ -582,4 +582,17 @@
     <string name="zt_voice_delete_model">"למחוק את %1$s?"</string>
     <string name="zt_voice_stop_on_pause">"עצירה כשאני משתתק"</string>
     <string name="zt_voice_stop_on_pause_summary">"סיום אוטומטי אחרי כמה שניות של שקט"</string>
+    <string name="zt_voice_used_for">"בשימוש עבור %1$s"</string>
+    <string name="zt_voice_tuned_for">"מותאם ל%1$s"</string>
+    <string name="zt_voice_download">"הורדת מודל דיבור"</string>
+    <string name="zt_voice_show_downloads">"הצגת המודלים להורדה"</string>
+    <string name="zt_voice_show_downloads_summary">"הרשימה מגיעה מהעמוד של ZT Keyboard ב-GitHub. שום דבר שאתם אומרים או מקלידים לא נשלח."</string>
+    <string name="zt_voice_list_loading">"מקבל את הרשימה…"</string>
+    <string name="zt_voice_list_failed">"לא ניתן לטעון את הרשימה. בדקו את החיבור והקישו כדי לנסות שוב."</string>
+    <string name="zt_voice_download_confirm">"להוריד את %1$s (%2$d MB)?"</string>
+    <string name="zt_voice_downloading">"מוריד… %1$d מתוך %2$d MB"</string>
+    <string name="zt_voice_download_stopped">"ההורדה נעצרה. הקישו על המודל כדי להמשיך."</string>
+    <string name="zt_voice_download_damaged">"הקובץ שהורד היה פגום והוסר. הקישו על המודל כדי לנסות שוב."</string>
+    <string name="zt_voice_download_no_space">"אין מספיק מקום פנוי בטלפון"</string>
+    <string name="zt_voice_download_failed">"ההורדה נכשלה"</string>
 </resources>
