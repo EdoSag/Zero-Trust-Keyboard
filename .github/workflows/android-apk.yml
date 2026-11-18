@@ -1,16 +1,17 @@
-# Builds a signed release APK on every push to main and publishes it as a
-# GitHub Release, so the keyboard can be downloaded and installed without
-# Google Play. Pull requests get the same build as a downloadable artifact (no
-# release) plus the unit tests, which shows a change still works before merge.
+# Builds both editions of ZT Keyboard, signed, on every push to main and
+# publishes them as a GitHub Release, so the keyboard can be downloaded and
+# installed without Google Play. Pull requests get the same builds as
+# downloadable artifacts (no release) plus the tests, which shows a change
+# still works before merge.
+#
+#   full     the keyboard plus the ZT app around it (Flutter + Zero-Trust-Core)
+#   offline  the keyboard alone: no Flutter, no account, no INTERNET permission
 #
 # One-time setup (Settings > Secrets and variables > Actions > New secret):
 #   ANDROID_KEYSTORE_BASE64   the release keystore, base64 encoded
 #   ANDROID_KEYSTORE_PASSWORD its password (store and key use the same one)
 # Every build must be signed with the same keystore, or Android refuses to
 # install an update over the previous version.
-#
-# Release builds use the `nouserlib` build type (no closed-source gesture
-# library can be loaded), see README.md.
 name: Android APK
 
 on:
@@ -43,10 +44,37 @@ jobs:
         with:
           distribution: temurin
           # Robolectric runs the unit tests on Android SDK 36, which needs Java 21.
-          # The app itself still compiles to Java 17 bytecode (app/build.gradle.kts).
+          # The app itself still compiles to Java 17 bytecode (android/app/build.gradle.kts).
           java-version: '21'
 
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # Pinned: Flutter 3.50 deprecates package:flutter/material.dart, which
+          # fails analyze. Same version as Zero-Trust-Core CI.
+          flutter-version: 3.47.9
+          cache: true
+
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Write .env when it is not committed
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: |
+          if [ -f .env ]; then
+            echo "Using the .env committed in the repository."
+          elif [ -n "$ENV_FILE" ]; then
+            printf '%s\n' "$ENV_FILE" > .env
+            echo "Wrote .env from the ENV_FILE secret."
+          else
+            # Public client values (the Supabase URL and publishable key ship
+            # inside every APK anyway). Set an ENV_FILE secret to override.
+            cat > .env <<'ENVEOF'
+          SUPABASE_URL=https://ohgxpnchqmisvktqjmcx.supabase.co
+          SUPABASE_ANON_KEY=sb_publishable_C1geAnwr0LZSxfQKRg21YA_G-OXHYky
+          ENVEOF
+            echo "Wrote .env with the shared public Supabase values."
+          fi
 
       - name: Restore the release keystore
         env:
@@ -68,7 +96,7 @@ jobs:
             echo "::error::Missing signing secrets. Add ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD under Settings > Secrets and variables > Actions."
             exit 1
           fi
-          # app/build.gradle.kts reads these (shared names across the apps).
+          # android/app/build.gradle.kts reads these (shared names across the apps).
           {
             echo "CM_BUILD_DIR=$RUNNER_TEMP"
             echo "CM_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
@@ -78,7 +106,7 @@ jobs:
 
       - name: Version and build number
         run: |
-          VERSION=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts)
+          VERSION=$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml)
           # versionCode must grow with every build so updates install over
           # the previous APK.
           BUILD=$((1000 + GITHUB_RUN_NUMBER))
@@ -88,17 +116,19 @@ jobs:
             echo "ZT_BUILD_NUMBER=$BUILD"
           } >> "$GITHUB_ENV"
 
-      - name: Unit tests
-        # HeliBoard's own CI variant: skips tests known to fail upstream.
-        if: github.event_name == 'pull_request'
-        run: ./gradlew --no-daemon testRunTestsUnitTest
+      - run: flutter pub get
 
-      - name: Build the release APK
+      - name: Analyze and test the ZT app
+        run: |
+          flutter analyze
+          flutter test test/
+
+      - name: Build the full edition APK
         run: |
           set -e
-          ./gradlew --no-daemon assembleNouserlib
+          flutter build apk --release --flavor full --build-number="$BUILD"
           APK="$APP_SLUG-$VERSION-build$BUILD.apk"
-          cp app/build/outputs/apk/nouserlib/*.apk "$APK"
+          cp build/app/outputs/flutter-apk/app-full-release.apk "$APK"
           echo "APK=$APK" >> "$GITHUB_ENV"
 
       - name: Build the Google Play bundle
@@ -107,10 +137,44 @@ jobs:
         if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         run: |
           set -e
-          ./gradlew --no-daemon bundleNouserlib
+          flutter build appbundle --release --flavor full --build-number="$BUILD"
           AAB="$APP_SLUG-$VERSION-build$BUILD.aab"
-          cp app/build/outputs/bundle/nouserlib/*.aab "$AAB"
+          cp build/app/outputs/bundle/fullRelease/*.aab "$AAB"
           echo "AAB=$AAB" >> "$GITHUB_ENV"
+
+      - name: Keyboard unit tests
+        # HeliBoard's own CI variant: skips tests known to fail upstream.
+        if: github.event_name == 'pull_request'
+        working-directory: android
+        run: ./gradlew --no-daemon -PztOffline :app:testOfflineRunTestsUnitTest
+
+      - name: Build the Offline edition APK
+        run: |
+          set -e
+          (cd android && ./gradlew --no-daemon -PztOffline :app:assembleOfflineRelease)
+          OFFLINE_APK="$APP_SLUG-offline-$VERSION-build$BUILD.apk"
+          cp build/app/outputs/apk/offline/release/*.apk "$OFFLINE_APK"
+          echo "OFFLINE_APK=$OFFLINE_APK" >> "$GITHUB_ENV"
+
+      - name: Check what each edition contains
+        # The promise of the Offline edition, checked on the built file: no
+        # INTERNET permission and no Flutter code. Both must hold the keyboard.
+        run: |
+          set -e
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          "$AAPT2" dump permissions "$OFFLINE_APK" | tee offline-permissions.txt
+          "$AAPT2" dump permissions "$APK" | tee full-permissions.txt
+          unzip -l "$OFFLINE_APK" > offline-files.txt
+          unzip -l "$APK" > full-files.txt
+          fail() { echo "::error::$1"; exit 1; }
+          grep -q "package: dev.sagron.zerotrustkeyboard.offline" offline-permissions.txt || fail "The Offline edition has the wrong app id."
+          ! grep -q "android.permission.INTERNET" offline-permissions.txt || fail "The Offline edition asks for the INTERNET permission."
+          ! grep -q "libflutter.so\|libapp.so\|flutter_assets" offline-files.txt || fail "The Offline edition contains Flutter code."
+          grep -q "libjni_latinime.so" offline-files.txt || fail "The Offline edition is missing the keyboard engine."
+          grep -q "android.permission.INTERNET" full-permissions.txt || fail "The full edition is missing the INTERNET permission."
+          grep -q "libflutter.so" full-files.txt || fail "The full edition is missing the ZT app."
+          grep -q "libjni_latinime.so" full-files.txt || fail "The full edition is missing the keyboard engine."
+          echo "Both editions contain what they should."
 
       - uses: actions/upload-artifact@v4
         if: env.AAB != ''
@@ -126,10 +190,16 @@ jobs:
           retention-days: 14
 
       - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OFFLINE_APK }}
+          path: ${{ env.OFFLINE_APK }}
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: reports
-          path: '*/build/reports'
+          path: build/app/reports
 
       - name: Publish the GitHub Release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -138,12 +208,14 @@ jobs:
         run: |
           TAG="v$VERSION-build$BUILD"
           SUBJECT=$(git log -1 --pretty=%s)
-          gh release create "$TAG" "$APK" ${AAB:+"$AAB"} \
+          gh release create "$TAG" "$APK" "$OFFLINE_APK" ${AAB:+"$AAB"} \
             --target "$GITHUB_SHA" \
             --title "$APP_TITLE $VERSION (build $BUILD)" \
             --notes "Latest change: $SUBJECT
 
-          Download **$APK** below and open it on your phone to install or update. Android may ask you to allow installs from this source the first time. Then turn on ZT Keyboard in Settings > System > Keyboard.
+          Download **$APK** below and open it on your phone to install or update. Android may ask you to allow installs from this source the first time. Then open ZT Keyboard and follow the two setup steps.
+
+          **$OFFLINE_APK** is the Offline edition: the same keyboard with no internet permission, no account and no sync. It installs as a separate app.
 
           The .aab file is for uploading to the Google Play Console; phones install the .apk." \
             --latest

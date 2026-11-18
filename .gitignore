@@ -6,12 +6,29 @@ local.properties
 .DS_Store
 Gemfile
 build
-app/build
-app/release
-app/.cxx
-app/.attach_*
+/android/app/build
+/android/app/release
+/android/app/.cxx
+/android/app/.attach_*
 fastlane/Appfile
-tools/*.txt
+/android/tools/*.txt
 *.patch
 *.diff
 *.sh
+
+# Flutter/Dart (the ZT app around the keyboard, full edition)
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/coverage/
+*.log
+app.*.symbols
+app.*.map.json
+# Written by the Flutter tool on every `flutter pub get`.
+/android/app/src/main/java/io/flutter/
+
+/android/key.properties
+
+# Supabase client settings; CI writes its own.
+.env
