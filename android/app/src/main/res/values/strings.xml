@@ -1335,7 +1335,7 @@ New dictionary:
     <string name="zt_voice_microphone">Microphone</string>
     <string name="zt_voice_microphone_allowed">Allowed</string>
     <string name="zt_voice_microphone_ask">Tap to allow the keyboard to use the microphone</string>
-    <string name="zt_voice_microphone_denied">Not allowed. Tap to open the app's permissions</string>
+    <string name="zt_voice_microphone_denied">Not allowed. Tap to open the app\'s permissions</string>
     <string name="zt_voice_models">Speech models</string>
     <string name="zt_voice_no_models">No speech model yet. Voice typing needs one.</string>
     <string name="zt_voice_model_size">%1$d MB</string>
