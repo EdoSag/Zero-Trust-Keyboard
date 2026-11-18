@@ -50,7 +50,8 @@ class VoiceDownloader(private val open: (url: String, from: Long) -> Source?) {
                             val read = try {
                                 input.read(buffer)
                             } catch (e: IOException) {
-                                return Result.NO_CONNECTION
+                                // A cancel during a stalled read shows up here, as its timeout.
+                                return if (cancelled()) Result.CANCELLED else Result.NO_CONNECTION
                             }
                             if (read < 0) break
                             have += read
@@ -65,7 +66,7 @@ class VoiceDownloader(private val open: (url: String, from: Long) -> Source?) {
                     }
                 }
                 // The connection closed early; the next try continues from here.
-                if (have < offer.bytes) return Result.NO_CONNECTION
+                if (have < offer.bytes) return if (cancelled()) Result.CANCELLED else Result.NO_CONNECTION
             }
             val sha256 = sha256(partial, cancelled) ?: return Result.CANCELLED
             if (sha256 != offer.sha256 || !startsLikeAModel(partial)) {

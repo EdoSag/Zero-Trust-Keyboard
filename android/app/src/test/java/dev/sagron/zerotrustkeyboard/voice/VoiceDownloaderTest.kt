@@ -125,6 +125,13 @@ class VoiceDownloaderTest {
         assertTrue(partial.length() < model.size)
     }
 
+    @Test fun aCancelDuringAStalledConnectionIsStillACancel() {
+        // The user cancels while the read hangs; the read then fails with its timeout.
+        var asked = 0
+        val result = download(Server(model, breakAfter = 100_000), cancelled = { ++asked > 3 })
+        assertEquals(VoiceDownloader.Result.CANCELLED, result)
+    }
+
     @Test fun noConnectionLeavesNothingBehind() {
         val result = VoiceDownloader { _, _ -> null }.download(offer, directory, { false }) {}
         assertEquals(VoiceDownloader.Result.NO_CONNECTION, result)
