@@ -384,6 +384,16 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     }
 
     @Override
+    public boolean forEachWord(final WordVisitor visitor) {
+        for (final WordProperty wordProperty : getWordPropertiesForSyncing()) {
+            if (wordProperty.mIsNotAWord || wordProperty.mIsBeginningOfSentence) continue;
+            visitor.visit(wordProperty.mWord, wordProperty.mProbabilityInfo.mProbability,
+                    wordProperty.mIsPossiblyOffensive);
+        }
+        return true;
+    }
+
+    @Override
     public boolean isInDictionary(final String word) {
         reloadDictionaryIfRequired();
         boolean lockAcquired = false;

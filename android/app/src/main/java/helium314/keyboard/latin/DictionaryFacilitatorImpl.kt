@@ -9,6 +9,7 @@ import android.Manifest
 import android.content.Context
 import android.provider.UserDictionary
 import android.util.LruCache
+import dev.sagron.zerotrustkeyboard.swipe.SwipeTyping
 import helium314.keyboard.keyboard.Keyboard
 import helium314.keyboard.keyboard.emoji.SupportedEmojis
 import helium314.keyboard.latin.DictionaryFacilitator.DictionaryInitializationListener
@@ -31,6 +32,7 @@ import helium314.keyboard.latin.permissions.PermissionsUtil
 import helium314.keyboard.latin.personalization.UserHistoryDictionary
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.settings.SettingsValuesForSuggestion
+import helium314.keyboard.latin.utils.JniUtils
 import helium314.keyboard.latin.utils.Log
 import helium314.keyboard.latin.utils.SubtypeSettings
 import helium314.keyboard.latin.utils.SuggestionResults
@@ -486,6 +488,10 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
         composedData: ComposedData, ngramContext: NgramContext, keyboard: Keyboard,
         settingsValuesForSuggestion: SettingsValuesForSuggestion, sessionId: Int, inputStyle: Int
     ): SuggestionResults {
+        // Swipe typing: ZT Keyboard's own open decoder, unless a system gesture library is present.
+        if (composedData.mIsBatchMode && !JniUtils.sHaveGestureLib)
+            return getSwipeSuggestionResults(composedData, ngramContext, keyboard, settingsValuesForSuggestion)
+
         val proximityInfoHandle = keyboard.proximityInfo.nativeProximityInfo
         val weightOfLangModelVsSpatialModel = floatArrayOf(Dictionary.NOT_A_WEIGHT_OF_LANG_MODEL_VS_SPATIAL_MODEL)
 
@@ -513,6 +519,35 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
 
         includeAtLeastTwoWordSuggestions(suggestionResults, suggestionsArray, composedData.mTypedWord)
 
+        return suggestionResults
+    }
+
+    /** The words a swipe could mean, from every dictionary of every language in use. */
+    private fun getSwipeSuggestionResults(
+        composedData: ComposedData, ngramContext: NgramContext, keyboard: Keyboard,
+        settingsValuesForSuggestion: SettingsValuesForSuggestion
+    ): SuggestionResults {
+        val suggestionResults = SuggestionResults(
+            SuggestedWords.MAX_SUGGESTIONS, ngramContext.isBeginningOfSentenceContext, false
+        )
+        val sources = ArrayList<SwipeTyping.Source>()
+        for (group in dictionaryGroups) {
+            val weight = group.getWeightForLocale(dictionaryGroups, true)
+            for (dictType in SWIPE_DICTIONARY_TYPES) {
+                val dictionary = group.getDict(dictType) ?: continue
+                sources.add(SwipeTyping.Source(dictionary, group.locale, weight, dictType != Dictionary.TYPE_MAIN))
+            }
+        }
+        for (result in SwipeTyping.decode(composedData.mInputPointers, keyboard, sources)) {
+            if (isBlacklisted(result.word)) continue
+            if (result.possiblyOffensive && settingsValuesForSuggestion.mBlockPotentiallyOffensive) continue
+            val info = SuggestedWordInfo(
+                result.word, "", result.score, SuggestedWordInfo.KIND_CORRECTION, result.dictionary,
+                SuggestedWordInfo.NOT_AN_INDEX, SuggestedWordInfo.NOT_A_CONFIDENCE
+            )
+            suggestionResults.add(info)
+            suggestionResults.mRawSuggestions?.add(info)
+        }
         return suggestionResults
     }
 
@@ -617,6 +652,11 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
 
     companion object {
         private val TAG = DictionaryFacilitatorImpl::class.java.simpleName
+
+        /** Dictionaries whose words can be swiped. */
+        private val SWIPE_DICTIONARY_TYPES = arrayOf(
+            Dictionary.TYPE_MAIN, Dictionary.TYPE_USER_HISTORY, Dictionary.TYPE_USER, Dictionary.TYPE_CONTACTS
+        )
 
         // HACK: This threshold is being used when adding a capitalized entry in the User History dictionary.
         private const val CAPITALIZED_FORM_MAX_PROBABILITY_FOR_INSERT = 140
@@ -841,6 +881,9 @@ private class DictionaryGroup(
         // Close old dictionary if exists. Main dictionary can be assigned multiple times.
         val oldDict = mainDict
         mainDict = newMainDict
+        // Read its words for swipe typing now, so the first swipe finds them ready.
+        if (newMainDict != null && newMainDict !== oldDict && !JniUtils.sHaveGestureLib)
+            SwipeTyping.warmUp(newMainDict, locale)
         if (oldDict != null && newMainDict !== oldDict)
             oldDict.close()
     }

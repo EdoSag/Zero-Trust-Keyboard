@@ -98,6 +98,21 @@ public abstract class Dictionary {
      */
     abstract public boolean isInDictionary(final String word);
 
+    /** Receives the words of a dictionary, see {@link #forEachWord}. */
+    public interface WordVisitor {
+        /** @param probability 0..255, the dictionary's own scale */
+        void visit(String word, int probability, boolean possiblyOffensive);
+    }
+
+    /**
+     * Passes every word of this dictionary to the visitor. Used to build the word list for
+     * swipe typing. May take seconds for a main dictionary: call it from a background thread.
+     * @return false when this dictionary cannot list its words
+     */
+    public boolean forEachWord(final WordVisitor visitor) {
+        return false;
+    }
+
     /**
      * Get the frequency of the word.
      * @param word the word to get the frequency of.

@@ -62,6 +62,30 @@ public final class ReadOnlyBinaryDictionary extends Dictionary {
     }
 
     @Override
+    public boolean forEachWord(final WordVisitor visitor) {
+        // Readers share this lock, so typing goes on while the words are listed.
+        mLock.readLock().lock();
+        try {
+            if (!mBinaryDictionary.isValidDictionary()) return false;
+            int token = 0;
+            do {
+                final BinaryDictionary.GetNextWordPropertyResult result =
+                        mBinaryDictionary.getNextWordProperty(token);
+                final WordProperty wordProperty = result.mWordProperty;
+                if (wordProperty == null) break;
+                if (!wordProperty.mIsNotAWord && !wordProperty.mIsBeginningOfSentence) {
+                    visitor.visit(wordProperty.mWord, wordProperty.mProbabilityInfo.mProbability,
+                            wordProperty.mIsPossiblyOffensive);
+                }
+                token = result.mNextToken;
+            } while (token != 0);
+            return true;
+        } finally {
+            mLock.readLock().unlock();
+        }
+    }
+
+    @Override
     public boolean isInDictionary(final String word) {
         if (mLock.readLock().tryLock()) {
             try {
