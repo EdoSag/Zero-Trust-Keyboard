@@ -63,6 +63,15 @@ public final class DictionaryCollection extends Dictionary {
     }
 
     @Override
+    public boolean forEachWord(final WordVisitor visitor) {
+        boolean any = false;
+        for (int i = mDictionaries.size() - 1; i >= 0; --i) {
+            any |= mDictionaries.get(i).forEachWord(visitor);
+        }
+        return any;
+    }
+
+    @Override
     public boolean isInDictionary(final String word) {
         for (int i = mDictionaries.size() - 1; i >= 0; --i)
             if (mDictionaries.get(i).isInDictionary(word)) return true;

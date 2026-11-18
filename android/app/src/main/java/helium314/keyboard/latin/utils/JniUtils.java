@@ -40,6 +40,13 @@ public final class JniUtils {
     }
 
     public static boolean sHaveGestureLib = false;
+
+    /**
+     * Swipe typing is always there: ZT Keyboard has its own open decoder
+     * (dev.sagron.zerotrustkeyboard.swipe). {@link #sHaveGestureLib} only says whether a
+     * closed system gesture library was found, which then takes its place.
+     */
+    public static final boolean sGestureTypingAvailable = true;
     static {
         // hardcoded default path, may not work on all phones
         @SuppressLint("SdCardPath") String filesDir = "/data/data/" + BuildConfig.APPLICATION_ID + "/files";
