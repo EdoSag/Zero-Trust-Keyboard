@@ -15,8 +15,11 @@ internal object WhisperNative {
     @JvmStatic external fun close(handle: Long)
     @JvmStatic external fun isMultilingual(handle: Long): Boolean
 
-    /** Stops a [transcribe] that is running on another thread. */
+    /** Stops the [transcribe] that is running on another thread, and any later one until [allow]. */
     @JvmStatic external fun cancel(handle: Long)
+
+    /** Takes back a [cancel]. */
+    @JvmStatic external fun allow(handle: Long)
 
     /**
      * @param samples 16 kHz mono, -1..1

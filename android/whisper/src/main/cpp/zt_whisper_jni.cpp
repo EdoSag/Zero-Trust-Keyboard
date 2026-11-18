@@ -66,11 +66,18 @@ Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_isMultilingual(JNIEnv *, j
     return engine != nullptr && whisper_is_multilingual(engine->context) != 0;
 }
 
-// Stops a transcription that is running on another thread.
+// Stops the transcription that is running on another thread, and any later one until allow().
 JNIEXPORT void JNICALL
 Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_cancel(JNIEnv *, jclass, jlong handle) {
     auto *engine = reinterpret_cast<Engine *>(handle);
     if (engine != nullptr) engine->cancelled.store(true);
+}
+
+// Takes back a cancel, before a new transcription.
+JNIEXPORT void JNICALL
+Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_allow(JNIEnv *, jclass, jlong handle) {
+    auto *engine = reinterpret_cast<Engine *>(handle);
+    if (engine != nullptr) engine->cancelled.store(false);
 }
 
 // Returns the text as UTF-8 bytes, or null when it failed or was cancelled.
@@ -81,7 +88,6 @@ Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_transcribe(
         jstring prompt, jint threads, jint beamSize) {
     auto *engine = reinterpret_cast<Engine *>(handle);
     if (engine == nullptr || count <= 0) return nullptr;
-    engine->cancelled.store(false);
 
     const char *languageChars = env->GetStringUTFChars(language, nullptr);
     std::string languageCode(languageChars);

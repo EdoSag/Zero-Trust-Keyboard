@@ -97,6 +97,17 @@ class VoiceAudioTest {
         assertTrue(second.heardSpeech)
     }
 
+    @Test fun speakingFromTheFirstMomentIsHeard() {
+        // No quiet moment before the first word: the room is only known afterwards.
+        val detector = SpeechEndDetector(pauseMillis = 2500, nothingHeardMillis = 8000)
+        assertEquals(SpeechEndDetector.State.LISTENING, feed(detector, 8000, 20))
+        assertEquals(SpeechEndDetector.State.LISTENING, feed(detector, 60, 1))
+        assertTrue(detector.heardSpeech)
+        // The pause is counted from the end of the speech, not from the start.
+        assertEquals(SpeechEndDetector.State.LISTENING, feed(detector, 60, 23))
+        assertEquals(SpeechEndDetector.State.FINISHED, feed(detector, 60, 1))
+    }
+
     @Test fun levelFollowsTheVoice() {
         val detector = SpeechEndDetector()
         detector.add(tone(60), 1600)

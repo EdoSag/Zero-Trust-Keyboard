@@ -62,6 +62,11 @@ class SpeechEndDetector(
     private var quietMillis = 0
     private var totalMillis = 0
 
+    // Loudness and length of every piece so far, to judge again once the room is known.
+    private var pastLoudness = FloatArray(256)
+    private var pastMillis = IntArray(256)
+    private var pastCount = 0
+
     /** True once the speaker has said something. */
     val heardSpeech: Boolean get() = speechMillis >= MIN_SPEECH_MILLIS
 
@@ -74,23 +79,58 @@ class SpeechEndDetector(
         val millis = count * 1000 / sampleRate
         val loudness = VoiceAudio.loudness(samples, count)
         level = (loudness / 6000f).coerceIn(0f, 1f)
-        // The quietest sound so far is the room.
-        if (noise < 0f || loudness < noise) noise = loudness
-        val speaking = loudness > maxOf(MIN_SPEECH_LOUDNESS, noise * 3f)
-        // The room may get louder: follow it quickly between words, and only very slowly
-        // while someone speaks, so that a long sentence is not taken for noise.
-        noise = if (speaking) noise * 1.002f + 0.1f else noise + (loudness - noise) * 0.05f
+        remember(loudness, millis)
         totalMillis += millis
-        if (speaking) {
+        if (noise < 0f || loudness < noise) {
+            // The quietest sound so far is the room. Someone who starts speaking at once is
+            // first taken for the room: when a quieter moment shows the real room, judge
+            // everything so far again.
+            val first = noise < 0f
+            noise = loudness
+            if (!first) judgeAgain()
+        } else if (isSpeech(loudness)) {
             speechMillis += millis
             quietMillis = 0
         } else {
             quietMillis += millis
         }
+        // The room may get louder: follow it quickly between words, and only very slowly
+        // while someone speaks, so that a long sentence is not taken for noise.
+        noise = if (isSpeech(loudness)) noise * 1.002f + 0.1f else noise + (loudness - noise) * 0.05f
         return when {
             heardSpeech && quietMillis >= pauseMillis -> State.FINISHED
             !heardSpeech && totalMillis >= nothingHeardMillis -> State.NOTHING_HEARD
             else -> State.LISTENING
+        }
+    }
+
+    private fun isSpeech(loudness: Float) = loudness > maxOf(MIN_SPEECH_LOUDNESS, noise * 3f)
+
+    private fun remember(loudness: Float, millis: Int) {
+        if (pastCount == pastLoudness.size) {
+            pastLoudness = pastLoudness.copyOf(pastCount * 2)
+            pastMillis = pastMillis.copyOf(pastCount * 2)
+        }
+        pastLoudness[pastCount] = loudness
+        pastMillis[pastCount] = millis
+        pastCount++
+    }
+
+    private fun judgeAgain() {
+        var speech = 0
+        var quiet = 0
+        for (i in 0 until pastCount) {
+            if (isSpeech(pastLoudness[i])) {
+                speech += pastMillis[i]
+                quiet = 0
+            } else {
+                quiet += pastMillis[i]
+            }
+        }
+        // Never take back speech that was heard.
+        if (speech >= speechMillis) {
+            speechMillis = speech
+            quietMillis = quiet
         }
     }
 
