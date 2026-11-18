@@ -118,6 +118,14 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Voice engine source
+        # whisper.cpp is fetched by CMake during the build (android/whisper). This prints
+        # the hash of the release archive, to compare with the one pinned in CMakeLists.txt.
+        run: |
+          TAG=$(sed -nE 's/^set\(ZT_WHISPER_TAG "([^"]+)"\).*/\1/p' android/whisper/src/main/cpp/CMakeLists.txt)
+          echo "whisper.cpp $TAG"
+          curl -sSfL "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/$TAG.tar.gz" | sha256sum
+
       - name: Analyze and test the ZT app
         run: |
           flutter analyze
@@ -174,6 +182,9 @@ jobs:
           grep -q "android.permission.INTERNET" full-permissions.txt || fail "The full edition is missing the INTERNET permission."
           grep -q "libflutter.so" full-files.txt || fail "The full edition is missing the ZT app."
           grep -q "libjni_latinime.so" full-files.txt || fail "The full edition is missing the keyboard engine."
+          grep -q "libzt_whisper.so" offline-files.txt || fail "The Offline edition is missing the voice typing engine."
+          grep -q "libzt_whisper.so" full-files.txt || fail "The full edition is missing the voice typing engine."
+          grep "libzt_whisper.so" full-files.txt
           echo "Both editions contain what they should."
 
       - uses: actions/upload-artifact@v4
