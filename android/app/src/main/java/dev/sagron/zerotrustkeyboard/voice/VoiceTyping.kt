@@ -62,7 +62,7 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
             toast(R.string.zt_voice_not_supported)
             return
         }
-        if (VoiceModels.active(ime) == null) {
+        if (!VoiceModels.any(ime)) {
             toast(R.string.zt_voice_needs_model)
             openScreen(Intent(ime, SettingsActivity2::class.java).putExtra(EXTRA_SCREEN, SettingsDestination.VoiceTyping))
             return
@@ -86,7 +86,8 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
     private fun finishListening() {
         val samples = recorder?.stop()
         recorder = null
-        val model = VoiceModels.active(ime)
+        val language = VoiceAudio.language(RichInputMethodManager.getInstance().currentSubtypeLocale)
+        val model = VoiceModels.forLanguage(ime, language)
         // Under half a second there is no word to find.
         if (samples == null || samples.size < VoiceAudio.SAMPLE_RATE / 2 || model == null) {
             state = State.IDLE
@@ -96,7 +97,6 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
         state = State.WORKING
         bar?.showWorking()
         val mine = ++session
-        val language = VoiceAudio.language(RichInputMethodManager.getInstance().currentSubtypeLocale)
         VoiceEngine.transcribe(model, samples, language) { heard ->
             if (mine != session) return@transcribe
             state = State.IDLE

@@ -16,6 +16,8 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.permissions.PermissionsUtil
@@ -40,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Locale
 
 /** Settings > Voice typing: the microphone permission and the speech models on the phone. */
 @Composable
@@ -47,17 +52,28 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var models by remember { mutableStateOf(VoiceModels.installed(context)) }
-    var active by remember { mutableStateOf(VoiceModels.active(context)?.name) }
+    var inUse by remember { mutableStateOf(VoiceModels.inUse(context)) }
     var copiedMegabytes by remember { mutableIntStateOf(-1) }
     var error by remember { mutableStateOf<Int?>(null) }
     var toDelete by remember { mutableStateOf<File?>(null) }
     var microphone by remember { mutableStateOf(hasMicrophone(context)) }
     var askedBefore by remember { mutableStateOf(false) }
+    var toDownload by remember { mutableStateOf<VoiceOffer?>(null) }
+    val listState by VoiceDownloads.listState.collectAsState()
+    val offers by VoiceDownloads.offers.collectAsState()
+    val download by VoiceDownloads.progress.collectAsState()
+    val downloadResult by VoiceDownloads.lastResult.collectAsState()
+    val downloadsFinished by VoiceDownloads.finished.collectAsState()
+    val uiLocale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
+    val hebrew = uiLocale.language == "iw" || uiLocale.language == "he"
 
     fun refresh() {
         models = VoiceModels.installed(context)
-        active = VoiceModels.active(context)?.name
+        inUse = VoiceModels.inUse(context)
     }
+
+    // A finished download added a model.
+    LaunchedEffect(downloadsFinished) { refresh() }
 
     // The permission can change in the system settings while this screen is in the back.
     LifecycleResumeEffect(Unit) {
@@ -135,16 +151,22 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
                 }
                 for (model in models) {
                     val megabytes = (model.length() shr 20).toInt()
+                    val tunedFor = VoiceCatalog.languageOf(model.name)
+                    val selected = model.name in inUse
+                    val use = when {
+                        !selected -> ""
+                        tunedFor != null -> " · " + stringResource(R.string.zt_voice_used_for, languageName(tunedFor, uiLocale))
+                        else -> " · " + stringResource(R.string.zt_voice_model_in_use)
+                    }
                     Preference(
                         name = VoiceModels.label(model.name),
-                        description = stringResource(R.string.zt_voice_model_size, megabytes) +
-                            if (model.name == active) " · " + stringResource(R.string.zt_voice_model_in_use) else "",
+                        description = stringResource(R.string.zt_voice_model_size, megabytes) + use,
                         onClick = {
                             VoiceModels.setActive(context, model)
                             refresh()
                         },
                     ) {
-                        RadioButton(selected = model.name == active, onClick = {
+                        RadioButton(selected = selected, onClick = {
                             VoiceModels.setActive(context, model)
                             refresh()
                         })
@@ -161,6 +183,61 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
                         if (copiedMegabytes < 0) picker.launch(MODEL_FILE_INTENT)
                     },
                 )
+                if (VoiceDownloads.available) {
+                    PreferenceCategory(stringResource(R.string.zt_voice_download))
+                    val running = download
+                    when {
+                        listState == VoiceDownloads.ListState.LOADED -> {
+                            val installedNames = models.map { it.name }.toSet()
+                            for (offer in offers.filter { it.file !in installedNames }) {
+                                val megabytes = (offer.bytes shr 20).toInt()
+                                val mine = running?.file == offer.file
+                                val tuned = offer.languages.firstOrNull()
+                                Preference(
+                                    name = offer.label(hebrew),
+                                    description = when {
+                                        mine -> stringResource(
+                                            R.string.zt_voice_downloading, ((running?.done ?: 0L) shr 20).toInt(), megabytes
+                                        )
+                                        tuned != null -> stringResource(R.string.zt_voice_model_size, megabytes) + " · " +
+                                            stringResource(R.string.zt_voice_tuned_for, languageName(tuned, uiLocale))
+                                        else -> stringResource(R.string.zt_voice_model_size, megabytes)
+                                    },
+                                    onClick = { if (running == null) toDownload = offer },
+                                ) {
+                                    if (mine) TextButton(onClick = { VoiceDownloads.cancel() }) {
+                                        Text(stringResource(android.R.string.cancel))
+                                    }
+                                }
+                            }
+                        }
+                        else -> Preference(
+                            name = stringResource(R.string.zt_voice_show_downloads),
+                            description = stringResource(
+                                when (listState) {
+                                    VoiceDownloads.ListState.LOADING -> R.string.zt_voice_list_loading
+                                    VoiceDownloads.ListState.FAILED -> R.string.zt_voice_list_failed
+                                    else -> R.string.zt_voice_show_downloads_summary
+                                }
+                            ),
+                            onClick = { VoiceDownloads.loadList() },
+                        )
+                    }
+                    downloadResult?.let { result ->
+                        if (result != VoiceDownloader.Result.OK) Text(
+                            stringResource(
+                                when (result) {
+                                    VoiceDownloader.Result.NO_CONNECTION -> R.string.zt_voice_download_stopped
+                                    VoiceDownloader.Result.WRONG_FILE -> R.string.zt_voice_download_damaged
+                                    VoiceDownloader.Result.NO_SPACE -> R.string.zt_voice_download_no_space
+                                    else -> R.string.zt_voice_download_failed
+                                }
+                            ),
+                            Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
                 error?.let {
                     Text(
                         stringResource(it),
@@ -171,6 +248,19 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
             }
         }
     )
+
+    toDownload?.let { offer ->
+        ConfirmationDialog(
+            onDismissRequest = { toDownload = null },
+            onConfirmed = {
+                VoiceDownloads.start(context, offer)
+                toDownload = null
+            },
+            content = {
+                Text(stringResource(R.string.zt_voice_download_confirm, offer.label(hebrew), (offer.bytes shr 20).toInt()))
+            },
+        )
+    }
 
     toDelete?.let { model ->
         ConfirmationDialog(
@@ -185,6 +275,10 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
         )
     }
 }
+
+/** "he" as "Hebrew", in the language of the screen. */
+private fun languageName(code: String, uiLocale: Locale): String =
+    Locale.forLanguageTag(code).getDisplayLanguage(uiLocale).ifEmpty { code }
 
 private fun hasMicrophone(context: android.content.Context) =
     PermissionsUtil.checkAllPermissionsGranted(context, Manifest.permission.RECORD_AUDIO)

@@ -1348,4 +1348,17 @@ New dictionary:
     <string name="zt_voice_delete_model">Delete %1$s?</string>
     <string name="zt_voice_stop_on_pause">Stop when I pause</string>
     <string name="zt_voice_stop_on_pause_summary">Finish by itself after a few seconds of silence</string>
+    <string name="zt_voice_used_for">Used for %1$s</string>
+    <string name="zt_voice_tuned_for">Tuned for %1$s</string>
+    <string name="zt_voice_download">Download a speech model</string>
+    <string name="zt_voice_show_downloads">Show the models to download</string>
+    <string name="zt_voice_show_downloads_summary">Gets the list from the ZT Keyboard page on GitHub. Nothing you say or type is sent.</string>
+    <string name="zt_voice_list_loading">Getting the list…</string>
+    <string name="zt_voice_list_failed">The list could not be loaded. Check the connection and tap to try again.</string>
+    <string name="zt_voice_download_confirm">Download %1$s (%2$d MB)?</string>
+    <string name="zt_voice_downloading">Downloading… %1$d of %2$d MB</string>
+    <string name="zt_voice_download_stopped">The download stopped. Tap the model to continue.</string>
+    <string name="zt_voice_download_damaged">The downloaded file was damaged and was removed. Tap the model to try again.</string>
+    <string name="zt_voice_download_no_space">Not enough free space on the phone</string>
+    <string name="zt_voice_download_failed">The download failed</string>
 </resources>

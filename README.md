@@ -60,6 +60,13 @@ turned into text on the phone, and the sound is never stored or sent. It needs a
 model: a Whisper file in ggml format, added in Settings > Voice typing. The language is the
 keyboard's current language.
 
+The full edition can download a model there (the Offline edition adds one from a file). The
+models are mirrored to the `voice-models` release of this repository by the "Voice models"
+workflow; `voice-models/sources.tsv` names them with a pinned sha256 each, and the app checks
+every download against the published list. A model whose name ends in a language code, like
+`.he.bin`, is tuned for that language and is used whenever the keyboard is in it: for Hebrew
+that is the ivrit.ai model.
+
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
