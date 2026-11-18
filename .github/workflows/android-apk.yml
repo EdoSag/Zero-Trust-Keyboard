@@ -123,33 +123,6 @@ jobs:
           flutter analyze
           flutter test test/
 
-      - name: Add the Hebrew dictionary
-        # Hebrew is on by default, so its dictionary ships in the APK instead
-        # of being a download the user has to find. It comes from HeliBoard's
-        # dictionary repository (the same file the keyboard's "add dictionary"
-        # link offers) and must match a hash in known_dict_hashes.txt.
-        run: |
-          DEST=android/app/src/main/assets/dicts/main_he.dict
-          URL=https://codeberg.org/Helium314/aosp-dictionaries/raw/branch/main/dictionaries/main_he.dict
-          problem=""
-          if [ ! -s "$DEST" ]; then
-            if curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$RUNNER_TEMP/main_he.dict" "$URL"; then
-              SUM=$(sha256sum "$RUNNER_TEMP/main_he.dict" | cut -d' ' -f1)
-              if grep -qx "$SUM" android/app/src/main/assets/known_dict_hashes.txt; then
-                cp "$RUNNER_TEMP/main_he.dict" "$DEST"
-                echo "Added main_he.dict ($SUM)."
-              else
-                problem="The downloaded Hebrew dictionary ($SUM) is not in known_dict_hashes.txt."
-              fi
-            else
-              problem="Could not download the Hebrew dictionary."
-            fi
-          fi
-          if [ -n "$problem" ]; then
-            echo "::error::$problem"
-            exit 1
-          fi
-
       - name: Build the full edition APK
         run: |
           set -e
@@ -201,8 +174,6 @@ jobs:
           grep -q "android.permission.INTERNET" full-permissions.txt || fail "The full edition is missing the INTERNET permission."
           grep -q "libflutter.so" full-files.txt || fail "The full edition is missing the ZT app."
           grep -q "libjni_latinime.so" full-files.txt || fail "The full edition is missing the keyboard engine."
-          grep -q "assets/dicts/main_he.dict" offline-files.txt || fail "The Offline edition is missing the Hebrew dictionary."
-          grep -q "assets/dicts/main_he.dict" full-files.txt || fail "The full edition is missing the Hebrew dictionary."
           echo "Both editions contain what they should."
 
       - uses: actions/upload-artifact@v4
