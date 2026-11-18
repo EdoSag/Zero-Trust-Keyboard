@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
-import helium314.keyboard.settings.SettingsActivity
+import helium314.keyboard.settings.SettingsActivity2
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -36,7 +36,9 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(null)
                     }
                     "openKeyboardSettings" -> {
-                        startActivity(Intent(this, SettingsActivity::class.java))
+                        // SettingsActivity2 is the entry that is never disabled: an older build
+                        // could switch SettingsActivity off (hidden launcher icon, Android 9).
+                        startActivity(Intent(this, SettingsActivity2::class.java))
                         result.success(null)
                     }
                     else -> result.notImplemented()
