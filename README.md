@@ -45,8 +45,13 @@ Java/Kotlin package names (`helium314.keyboard...`) are kept on purpose so upstr
 applying; the app id is `dev.sagron.zerotrustkeyboard`.
 
 Users cannot load a closed-source gesture library into the keyboard
-(`BuildConfig.ALLOW_USER_LIB` is off). Swipe typing will come from our own open decoder
-(phase K2).
+(`BuildConfig.ALLOW_USER_LIB` is off). Swipe typing comes from our own open decoder in
+`android/app/src/main/java/dev/sagron/zerotrustkeyboard/swipe/` (AGPL-3.0, pure Kotlin, runs
+on the device). It compares the shape of the swipe with the ideal path of every word in the
+loaded dictionaries (main, learned words, personal dictionary, contacts) and weighs in how
+common the word is. It works for every language that has a dictionary and a letter layout.
+It does not yet use the previous word, so look-alike swipes ("the" / "there") go to the
+more common word, with the other one in the suggestion strip.
 
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
