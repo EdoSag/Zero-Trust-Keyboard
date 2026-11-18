@@ -53,6 +53,13 @@ common the word is. It works for every language that has a dictionary and a lett
 It does not yet use the previous word, so look-alike swipes ("the" / "there") go to the
 more common word, with the other one in the suggestion strip.
 
+Voice typing (phase K3) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/voice/`
+with the engine in `android/whisper/`: whisper.cpp (MIT), fetched by CMake at a pinned release
+and built into `libzt_whisper.so`. The microphone key records into memory, the speech is
+turned into text on the phone, and the sound is never stored or sent. It needs a speech
+model: a Whisper file in ggml format, added in Settings > Voice typing. The language is the
+keyboard's current language.
+
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 

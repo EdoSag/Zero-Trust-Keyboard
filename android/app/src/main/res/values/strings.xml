@@ -1318,4 +1318,34 @@ New dictionary:
     <string name="gesture_data_swipe_o_scope">Tool for visualizing gesture data: &lt;a href=%s&gt;Swipe-O-Scope&lt;/a&gt;</string>
 
     <!-- new strings should go above the section for gesture data gathering -->
+
+    <!-- ZT Keyboard: voice typing -->
+    <string name="zt_voice_title">Voice typing</string>
+    <string name="zt_voice_intro">Press the microphone key and speak. Your voice is turned into text on this phone. The sound is never saved and never leaves the phone.</string>
+    <string name="zt_voice_listening">Listening…</string>
+    <string name="zt_voice_listening_time">Listening… %1$d:%2$02d</string>
+    <string name="zt_voice_working">Writing it down…</string>
+    <string name="zt_voice_done">Done</string>
+    <string name="zt_voice_cancel">Cancel</string>
+    <string name="zt_voice_needs_model">Add a speech model to use voice typing</string>
+    <string name="zt_voice_not_supported">Voice typing does not work on this phone</string>
+    <string name="zt_voice_no_microphone">The microphone could not be used</string>
+    <string name="zt_voice_nothing_heard">Nothing was heard</string>
+    <string name="zt_voice_failed">Voice typing failed, please try again</string>
+    <string name="zt_voice_microphone">Microphone</string>
+    <string name="zt_voice_microphone_allowed">Allowed</string>
+    <string name="zt_voice_microphone_ask">Tap to allow the keyboard to use the microphone</string>
+    <string name="zt_voice_microphone_denied">Not allowed. Tap to open the app's permissions</string>
+    <string name="zt_voice_models">Speech models</string>
+    <string name="zt_voice_no_models">No speech model yet. Voice typing needs one.</string>
+    <string name="zt_voice_model_size">%1$d MB</string>
+    <string name="zt_voice_model_in_use">In use</string>
+    <string name="zt_voice_add_model">Add a speech model from a file</string>
+    <string name="zt_voice_add_model_summary">A Whisper model in ggml format (a .bin file, as used by whisper.cpp). Bigger models understand better and take longer.</string>
+    <string name="zt_voice_copying">Copying… %1$d MB</string>
+    <string name="zt_voice_not_a_model">This file is not a Whisper speech model in ggml format</string>
+    <string name="zt_voice_copy_failed">The file could not be copied</string>
+    <string name="zt_voice_delete_model">Delete %1$s?</string>
+    <string name="zt_voice_stop_on_pause">Stop when I pause</string>
+    <string name="zt_voice_stop_on_pause_summary">Finish by itself after a few seconds of silence</string>
 </resources>
