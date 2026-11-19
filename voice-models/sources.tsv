@@ -1,0 +1,9 @@
+# The speech models offered for download in ZT Keyboard (Settings > Voice typing).
+# The "Voice models" workflow mirrors them to the release "voice-models" of this repository.
+# Fields, separated by tabs (use - for none):
+# file	languages	source	sha256 of the source	quantize	English name	Hebrew name
+ggml-ivrit-large-v3-turbo-q5_0.he.bin	he	https://huggingface.co/ivrit-ai/whisper-large-v3-turbo-ggml/resolve/main/ggml-model.bin	c8090411113357097bfafc2b8e228ec1639fa7f5fe4ecb5d054ac0ccef8641b1	q5_0	Hebrew (ivrit.ai), recommended	עברית (ivrit.ai), מומלץ
+ggml-ivrit-large-v3-turbo.he.bin	he	https://huggingface.co/ivrit-ai/whisper-large-v3-turbo-ggml/resolve/main/ggml-model.bin	c8090411113357097bfafc2b8e228ec1639fa7f5fe4ecb5d054ac0ccef8641b1	-	Hebrew (ivrit.ai), full size, slower	עברית (ivrit.ai), גודל מלא, איטי יותר
+ggml-large-v3-turbo-q5_0.bin	-	https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin	394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2	-	All languages, best	כל השפות, הטוב ביותר
+ggml-small-q5_1.bin	-	https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin	ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb	-	All languages, smaller and faster	כל השפות, קטן ומהיר יותר
+ggml-base-q5_1.bin	-	https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin	422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898	-	All languages, smallest	כל השפות, הקטן ביותר

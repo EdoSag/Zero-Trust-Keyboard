@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Mirrors the speech models for voice typing to the release "voice-models" of this
+# repository, where the app downloads them from (Settings > Voice typing). What is
+# mirrored is decided by voice-models/sources.tsv; every source is checked against the
+# sha256 pinned there. Runs when that folder changes on Dev, and by hand.
+name: Voice models
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [Dev]
+    paths:
+      - voice-models/**
+      - .github/workflows/voice-models.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: voice-models
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the whisper.cpp quantize tool
+        # The same whisper.cpp release the app is built with.
+        run: |
+          set -euo pipefail
+          TAG=$(sed -nE 's/^set\(ZT_WHISPER_TAG "([^"]+)"\).*/\1/p' android/whisper/src/main/cpp/CMakeLists.txt)
+          curl -sSfL -o whisper.tar.gz "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/$TAG.tar.gz"
+          WANTED=$(sed -nE 's/^set\(ZT_WHISPER_SHA256 "([^"]+)"\).*/\1/p' android/whisper/src/main/cpp/CMakeLists.txt)
+          echo "$WANTED  whisper.tar.gz" | sha256sum --check
+          mkdir "$RUNNER_TEMP/whisper"
+          tar -xzf whisper.tar.gz -C "$RUNNER_TEMP/whisper" --strip-components=1
+          rm whisper.tar.gz
+          cmake -S "$RUNNER_TEMP/whisper" -B "$RUNNER_TEMP/whisper/build" -DCMAKE_BUILD_TYPE=Release \
+            -DWHISPER_BUILD_EXAMPLES=ON -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF
+          cmake --build "$RUNNER_TEMP/whisper/build" --target whisper-quantize -j "$(nproc)"
+
+      - name: Fetch and check the models
+        run: bash voice-models/mirror.sh voice-models/sources.tsv "$RUNNER_TEMP/models" "$RUNNER_TEMP/whisper/build/bin/whisper-quantize"
+
+      - name: Publish to the voice-models release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view voice-models > /dev/null 2>&1; then
+            gh release create voice-models --title "Voice typing models" \
+              --notes-file voice-models/README.md --latest=false --target "$GITHUB_SHA"
+          fi
+          gh release upload voice-models "$RUNNER_TEMP"/models/*.bin --clobber
+          # The list last: it only ever names files that are already there.
+          gh release upload voice-models "$RUNNER_TEMP/models/voice-models.tsv" --clobber
