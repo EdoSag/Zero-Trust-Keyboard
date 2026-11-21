@@ -1,11 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zerotrust_keyboard/sync/personal_word.dart';
+import 'package:zerotrust_keyboard/sync/reconcile.dart';
 import 'package:zerotrust_keyboard/sync/reconcile_words.dart';
 
 PersonalWord w(String word, {String shortcut = '', String locale = ''}) =>
     PersonalWord(word: word, shortcut: shortcut, locale: locale);
 
-SyncedWord s(String id, PersonalWord word) => SyncedWord(id: id, word: word);
+Synced<PersonalWord> s(String id, PersonalWord word) =>
+    Synced(id: id, value: word);
 
 List<String> words(List<PersonalWord> list) =>
     [for (final w in list) w.word]..sort();
@@ -114,11 +116,11 @@ void main() {
       locale: 'he',
       weight: 200,
     );
-    final item = SyncedWord(id: 'x', word: word);
+    final item = Synced(id: 'x', value: word);
     final json = syncedWordsCollection.encode(item);
     expect(json['kind'], 'word');
     final back = syncedWordsCollection.fromJson('x', json, DateTime(2026));
-    expect(back.word.key, word.key);
-    expect(back.word.weight, 200);
+    expect(back.value.key, word.key);
+    expect(back.value.weight, 200);
   });
 }

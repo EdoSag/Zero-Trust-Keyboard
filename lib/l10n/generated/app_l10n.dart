@@ -270,6 +270,30 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Could not sync just now. It will try again.'**
   String get syncWordsFailed;
+
+  /// No description provided for @syncClipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync my pinned clips'**
+  String get syncClipsTitle;
+
+  /// No description provided for @syncClipsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Text you pinned in the keyboard\'s clipboard, end-to-end encrypted, on every phone signed in to this account. Pictures and very long texts stay on this phone. Syncs while this app is open and unlocked.'**
+  String get syncClipsBody;
+
+  /// No description provided for @syncClipsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing to sync yet} =1{1 clip synced} other{{count} clips synced}}'**
+  String syncClipsCount(int count);
+
+  /// No description provided for @syncClipsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The clipboard could not be opened just now. It will try again.'**
+  String get syncClipsUnavailable;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

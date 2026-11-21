@@ -109,4 +109,27 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get syncWordsFailed => 'Could not sync just now. It will try again.';
+
+  @override
+  String get syncClipsTitle => 'Sync my pinned clips';
+
+  @override
+  String get syncClipsBody =>
+      'Text you pinned in the keyboard\'s clipboard, end-to-end encrypted, on every phone signed in to this account. Pictures and very long texts stay on this phone. Syncs while this app is open and unlocked.';
+
+  @override
+  String syncClipsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count clips synced',
+      one: '1 clip synced',
+      zero: 'Nothing to sync yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncClipsUnavailable =>
+      'The clipboard could not be opened just now. It will try again.';
 }
