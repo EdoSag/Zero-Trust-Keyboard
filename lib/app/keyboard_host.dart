@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../sync/keyboard_settings.dart';
+import '../sync/learned_words.dart';
 import '../sync/personal_word.dart';
 
 /// Where the keyboard stands in the phone's settings.
@@ -111,6 +112,18 @@ class KeyboardHost {
         'set': set,
         'remove': remove,
       }) ??
+      false;
+
+  /// The words the keyboard learned from typing, by language, for the
+  /// languages that are turned on. Null when learning is switched off in
+  /// the keyboard's settings or a history cannot be read now.
+  Future<WordsByLanguage?> learnedWords() async =>
+      decodeWordsByLanguage(await _channel.invokeMethod<Object?>('learnedWords'));
+
+  /// Adds words to the typing history. False when learning is switched
+  /// off, and nothing was added.
+  Future<bool> addLearnedWords(Map<String, List<String>> words) async =>
+      await _channel.invokeMethod<bool>('addLearnedWords', {'words': words}) ??
       false;
 }
 

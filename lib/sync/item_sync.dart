@@ -10,6 +10,7 @@ import '../app/auth_providers.dart';
 import '../app/keyboard_host.dart';
 import 'personal_word.dart';
 import 'keyboard_settings.dart';
+import 'learned_words.dart';
 import 'pinned_clip.dart';
 import 'reconcile.dart';
 
@@ -356,4 +357,66 @@ class SettingsSync extends RoundSync {
 
 final settingsSyncProvider = NotifierProvider<SettingsSync, ItemSyncStatus>(
   SettingsSync.new,
+);
+
+final learnedSyncEnabledProvider = AsyncNotifierProvider<SyncEnabled, bool>(
+  () => SyncEnabled('learned'),
+);
+
+/// The words the keyboard learned from typing: one item in the account,
+/// merged word by word. Words are only ever added to a phone.
+class LearnedSync extends RoundSync {
+  @override
+  String get name => 'learned';
+
+  @override
+  AsyncNotifierProvider<SyncEnabled, bool> get enabledProvider =>
+      learnedSyncEnabledProvider;
+
+  @override
+  Future<ItemSyncStatus?> round(String userId) async {
+    final host = ref.read(keyboardHostProvider);
+    final prefs = ref.read(ztPreferencesStoreProvider);
+    final phone = await host.learnedWords();
+    if (!active) return null;
+    if (phone == null) {
+      return const ItemSyncStatus(running: true, unavailable: true);
+    }
+    final store = await ref.read(ztLocalStoreProvider.future);
+    final items = await learnedWordsCollection.list(store);
+    final account = items
+        .where((item) => item.id == LearnedWords.itemId)
+        .firstOrNull;
+    final baseKey = 'kb_sync_learned_base_$userId';
+    final merge = mergeLearned(
+      phone: phone,
+      account: account?.words,
+      base: decodeLearnedBase(await prefs.read(baseKey)),
+    );
+    if (!active) return null;
+    if (merge.addToPhone.isNotEmpty &&
+        !await host.addLearnedWords(merge.addToPhone)) {
+      return const ItemSyncStatus(running: true, unavailable: true);
+    }
+    if (!active) return null;
+    if (merge.upload) {
+      await learnedWordsCollection.save(
+        ref.read(ztSyncControllerProvider.notifier),
+        store,
+        LearnedWords(merge.merged),
+      );
+    }
+    await prefs.write(
+      baseKey,
+      jsonEncode(encodeWordsByLanguage(merge.merged)),
+    );
+    return ItemSyncStatus(
+      running: true,
+      synced: merge.merged.values.fold<int>(0, (n, words) => n + words.length),
+    );
+  }
+}
+
+final learnedSyncProvider = NotifierProvider<LearnedSync, ItemSyncStatus>(
+  LearnedSync.new,
 );

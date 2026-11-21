@@ -6,6 +6,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import dev.sagron.zerotrustkeyboard.sync.KeyboardSettingsSync
+import dev.sagron.zerotrustkeyboard.sync.LearnedWordsSync
 import dev.sagron.zerotrustkeyboard.sync.PersonalWords
 import dev.sagron.zerotrustkeyboard.sync.PinnedClips
 import helium314.keyboard.settings.SettingsActivity2
@@ -76,6 +77,13 @@ class MainActivity : FlutterFragmentActivity() {
                             KeyboardSettingsSync.apply(applicationContext, set, remove)
                             true
                         }
+                    }
+                    // The words the keyboard learned from typing. Reading waits for the
+                    // keyboard's dictionary thread, so off the main thread.
+                    "learnedWords" -> inBackground(result) { LearnedWordsSync.all(applicationContext) }
+                    "addLearnedWords" -> {
+                        val words = call.argument<Map<String, List<String>>>("words").orEmpty()
+                        inBackground(result) { LearnedWordsSync.add(applicationContext, words) }
                     }
                     else -> result.notImplemented()
                 }

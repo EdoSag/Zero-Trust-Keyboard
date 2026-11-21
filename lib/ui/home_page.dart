@@ -186,6 +186,7 @@ class _HomePageState extends ConsumerState<HomePage>
           if (user != null && !locked) const _SyncWordsTile(),
           if (user != null && !locked) const _SyncClipsTile(),
           if (user != null && !locked) const _SyncSettingsTile(),
+          if (user != null && !locked) const _SyncLearnedTile(),
           _Header(l.appHeader),
           const _LanguageTile(),
           const _ThemeTile(),
@@ -551,6 +552,27 @@ class _SyncSettingsTile extends ConsumerWidget {
       status: ref.watch(settingsSyncProvider),
       onChanged: (on) =>
           ref.read(settingsSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+/// The switch for syncing the words the keyboard learned from typing.
+class _SyncLearnedTile extends ConsumerWidget {
+  const _SyncLearnedTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return _SyncTile(
+      key: const Key('sync-learned'),
+      icon: Icons.psychology_alt_outlined,
+      title: l.syncLearnedTitle,
+      body: l.syncLearnedBody,
+      unavailable: l.syncLearnedUnavailable,
+      count: l.syncLearnedCount,
+      enabled: ref.watch(learnedSyncEnabledProvider).value ?? false,
+      status: ref.watch(learnedSyncProvider),
+      onChanged: (on) => ref.read(learnedSyncEnabledProvider.notifier).set(on),
     );
   }
 }

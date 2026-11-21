@@ -146,4 +146,27 @@ class AppL10nEn extends AppL10n {
   @override
   String get syncSettingsUnavailable =>
       'Waiting: another phone on this account runs a newer ZT Keyboard. Update this app to sync settings.';
+
+  @override
+  String get syncLearnedTitle => 'Sync the words my keyboard learned';
+
+  @override
+  String get syncLearnedBody =>
+      'Words the keyboard picked up from your typing and now suggests, end-to-end encrypted, on every phone signed in to this account. Nothing typed in password fields or incognito is ever learned. Syncs while this app is open and unlocked.';
+
+  @override
+  String syncLearnedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words synced',
+      one: '1 word synced',
+      zero: 'Nothing to sync yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncLearnedUnavailable =>
+      'Nothing to sync: learning from typing is off in the keyboard\'s settings, or the words could not be read just now.';
 }

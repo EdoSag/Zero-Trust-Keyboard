@@ -146,4 +146,27 @@ class AppL10nHe extends AppL10n {
   @override
   String get syncSettingsUnavailable =>
       'בהמתנה: טלפון אחר בחשבון הזה מריץ גרסה חדשה יותר של ZT Keyboard. עדכנו את האפליקציה כדי לסנכרן הגדרות.';
+
+  @override
+  String get syncLearnedTitle => 'סנכרון המילים שהמקלדת למדה';
+
+  @override
+  String get syncLearnedBody =>
+      'מילים שהמקלדת למדה מההקלדה שלכם וכבר מציעה, בהצפנה מקצה לקצה, בכל טלפון שמחובר לחשבון הזה. מה שמוקלד בשדות סיסמה או במצב פרטי לא נלמד אף פעם. הסנכרון פועל כשהאפליקציה פתוחה ולא נעולה.';
+
+  @override
+  String syncLearnedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count מילים סונכרנו',
+      one: 'מילה אחת סונכרנה',
+      zero: 'אין עדיין מה לסנכרן',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncLearnedUnavailable =>
+      'אין מה לסנכרן: הלמידה מהקלדה כבויה בהגדרות המקלדת, או שלא ניתן לקרוא את המילים כרגע.';
 }

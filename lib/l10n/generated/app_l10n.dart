@@ -318,6 +318,30 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Waiting: another phone on this account runs a newer ZT Keyboard. Update this app to sync settings.'**
   String get syncSettingsUnavailable;
+
+  /// No description provided for @syncLearnedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync the words my keyboard learned'**
+  String get syncLearnedTitle;
+
+  /// No description provided for @syncLearnedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Words the keyboard picked up from your typing and now suggests, end-to-end encrypted, on every phone signed in to this account. Nothing typed in password fields or incognito is ever learned. Syncs while this app is open and unlocked.'**
+  String get syncLearnedBody;
+
+  /// No description provided for @syncLearnedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing to sync yet} =1{1 word synced} other{{count} words synced}}'**
+  String syncLearnedCount(int count);
+
+  /// No description provided for @syncLearnedUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to sync: learning from typing is off in the keyboard\'s settings, or the words could not be read just now.'**
+  String get syncLearnedUnavailable;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
