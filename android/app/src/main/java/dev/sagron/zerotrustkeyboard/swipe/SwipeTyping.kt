@@ -82,11 +82,10 @@ object SwipeTyping {
         // How well a word follows the words before the cursor, by the dictionary it is from.
         // A dictionary that is being written to answers late; then the swipe does not wait.
         var busy = false
-        fun fit(lexicon: Int, word: String): Float {
+        fun fit(lexicon: Int, word: String, alone: Int): Float {
             if (busy) return 0f
             val started = System.nanoTime()
             val dictionary = ready[lexicon].first.dictionary
-            val alone = dictionary.getFrequency(word)
             var best = 0f
             for (context in contexts) {
                 best = maxOf(best, SwipeDecoder.contextFit(alone, dictionary.getNgramProbability(context, word)))
@@ -94,7 +93,7 @@ object SwipeTyping {
             if (System.nanoTime() - started > SLOW_LOOKUP_NANOS) busy = true
             return best
         }
-        val fitsContext: ((Int, String) -> Float)? = if (contexts.isEmpty()) null else ::fit
+        val fitsContext: ((Int, String, Int) -> Float)? = if (contexts.isEmpty()) null else ::fit
         val candidates = synchronized(decoder) {
             val layout = layoutFor(keyboard)
             decoder.decode(
