@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../sync/personal_word.dart';
+
 /// Where the keyboard stands in the phone's settings.
 class ImeStatus {
   const ImeStatus({required this.enabled, required this.selected});
@@ -47,6 +49,28 @@ class KeyboardHost {
   /// The keyboard's own settings: languages, layout, themes, dictionaries.
   Future<void> openKeyboardSettings() =>
       _channel.invokeMethod('openKeyboardSettings');
+
+  /// The personal dictionary, or null while ZT Keyboard is not turned on in
+  /// the phone's keyboard list: Android then shows it as empty, which must
+  /// not be read as "every word was deleted".
+  Future<List<PersonalWord>?> personalWords() async {
+    final list = await _channel.invokeListMethod<Map<Object?, Object?>>(
+      'personalWords',
+    );
+    return list?.map(PersonalWord.fromMap).toList();
+  }
+
+  /// Adds and removes personal dictionary entries. False when the keyboard
+  /// is not turned on, and nothing was changed.
+  Future<bool> applyPersonalWords({
+    required List<PersonalWord> add,
+    required List<PersonalWord> remove,
+  }) async =>
+      await _channel.invokeMethod<bool>('applyPersonalWords', {
+        'add': [for (final w in add) w.toMap()],
+        'remove': [for (final w in remove) w.toMap()],
+      }) ??
+      false;
 }
 
 final keyboardHostProvider = Provider<KeyboardHost>(

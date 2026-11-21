@@ -14,6 +14,11 @@ dictionary through your Zero-Trust account.
 The Hebrew dictionary (94,799 words) is built from the Android Open Source Project's Hebrew
 word list, see [dictionaries/README.md](dictionaries/README.md).
 
+Signed in, you can turn on **Sync my personal dictionary** in the ZT Keyboard app: the words and
+shortcuts you added are kept the same on every phone of the account, end-to-end encrypted. It is
+off until you turn it on, and it runs while the app is open and unlocked, because the keyboard
+itself never holds the account's key.
+
 ## Two editions
 
 | | ZT Keyboard | ZT Keyboard Offline |

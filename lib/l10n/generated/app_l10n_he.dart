@@ -83,4 +83,30 @@ class AppL10nHe extends AppL10n {
 
   @override
   String get accountClose => 'חזרה למקלדת';
+
+  @override
+  String get syncWordsTitle => 'סנכרון המילון האישי שלי';
+
+  @override
+  String get syncWordsBody =>
+      'המילים והקיצורים שהוספתם, בהצפנה מקצה לקצה, בכל טלפון שמחובר לחשבון הזה. הסנכרון פועל כשהאפליקציה פתוחה ולא נעולה.';
+
+  @override
+  String syncWordsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count רשומות סונכרנו',
+      one: 'רשומה אחת סונכרנה',
+      zero: 'אין עדיין מה לסנכרן',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncWordsKeyboardOff =>
+      'קודם הפעילו את ZT Keyboard. אנדרואיד מציג את המילון האישי רק למקלדת פעילה.';
+
+  @override
+  String get syncWordsFailed => 'הסנכרון לא הצליח כרגע. הוא ינסה שוב.';
 }

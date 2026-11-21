@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import dev.sagron.zerotrustkeyboard.sync.PersonalWords
 import helium314.keyboard.settings.SettingsActivity2
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -41,9 +42,37 @@ class MainActivity : FlutterFragmentActivity() {
                         startActivity(Intent(this, SettingsActivity2::class.java))
                         result.success(null)
                     }
+                    // The personal dictionary, for the account's encrypted sync. Android
+                    // opens it only to a keyboard that is turned on; for any other app it
+                    // looks empty, which must not be taken for "the user deleted every word".
+                    "personalWords" -> inBackground(result) {
+                        if (isEnabled()) PersonalWords.all(applicationContext) else null
+                    }
+                    "applyPersonalWords" -> {
+                        val add = call.argument<List<Map<String, Any?>>>("add").orEmpty()
+                        val remove = call.argument<List<Map<String, Any?>>>("remove").orEmpty()
+                        inBackground(result) {
+                            if (!isEnabled()) return@inBackground false
+                            PersonalWords.apply(applicationContext, add, remove)
+                            true
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /** Runs [work] off the main thread and answers the Flutter side on it. */
+    private fun inBackground(result: MethodChannel.Result, work: () -> Any?) {
+        Thread {
+            val outcome = runCatching(work)
+            runOnUiThread {
+                outcome.fold(
+                    onSuccess = { result.success(it) },
+                    onFailure = { result.error("failed", it.message, null) },
+                )
+            }
+        }.start()
     }
 
     private fun imm() = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
