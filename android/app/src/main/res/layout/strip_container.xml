@@ -48,4 +48,10 @@
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+    <!-- Shown over the strip while a translation is worked out, and after it for Undo. -->
+    <dev.sagron.zerotrustkeyboard.translate.TranslateBarView
+        android:id="@+id/translate_bar"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

@@ -106,7 +106,7 @@ packages:
     source: hosted
     version: "3.1.2"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: e3626ae6270383c9e3a549f34c9e4cd26c09ae6a9adaab2bf4737a00340efdc4
@@ -996,6 +996,15 @@ packages:
       url: "https://github.com/EdoSag/Zero-Trust-Core.git"
     source: git
     version: "0.3.2"
+  zt_release_checks:
+    dependency: "direct dev"
+    description:
+      path: "packages/zt_release_checks"
+      ref: "7f2a97d45120c21a148cb4fc67a95e3580e7a8a9"
+      resolved-ref: "7f2a97d45120c21a148cb4fc67a95e3580e7a8a9"
+      url: "https://github.com/EdoSag/Zero-Trust-Core.git"
+    source: git
+    version: "0.1.0"
 sdks:
   dart: ">=3.13.0 <4.0.0"
   flutter: ">=3.47.0"

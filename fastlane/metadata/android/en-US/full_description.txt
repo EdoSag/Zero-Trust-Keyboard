@@ -1,0 +1,26 @@
+Zero-Trust Keyboard keeps what you type on your phone. Word suggestions, autocorrect, swipe typing, voice typing and translation all run on the device. Nothing you type is sent anywhere.
+
+WHAT IT DOES
+• Hebrew and English side by side, including both in one sentence, with a Hebrew dictionary of more than 180,000 words.
+• Swipe typing in every language that has a dictionary, with our own open decoder.
+• Voice typing on the phone: the sound is turned into text on the device and is never stored or sent. Includes a model tuned for Hebrew.
+• Translate what you wrote with one key, on the phone, between the languages you choose.
+• Emoji search and emoji suggestions in Hebrew and English: type dog or כלב and the emoji is offered.
+• Clipboard history with pinned clips.
+• Personal dictionary and shortcuts, and suggestions that learn from the way you write.
+• One-handed, split and floating keyboard, a number row and a toolbar you arrange yourself.
+• Themes, key borders, your own background image and custom layouts.
+• Incognito mode: nothing is learned while it is on.
+
+WHY ZERO-TRUST
+• What you type never leaves the phone. The internet is used only to download a voice or translation model you ask for, and for the optional account.
+• Optional end-to-end encrypted sync of your personal dictionary, learned words, pinned clips and settings through your Zero-Trust account. Each one is off until you turn it on. We can't read them, and neither can anyone who breaks into the server.
+• Works with no account at all.
+• No ads, no trackers, no analytics, no data sold. Ever.
+• Open source (AGPL-3.0), so anyone can check what the keyboard does. Built on HeliBoard.
+• English and Hebrew, with full right-to-left support.
+
+Part of the Zero-Trust suite: Notes, Tasks, Calendar, Contacts, Phone, Fitness, Meds, Time, Browser and more. One account opens them all.
+
+Privacy policy: https://zerotrust.bz/privacy/
+Support: support@zerotrust.bz
