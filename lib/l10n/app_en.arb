@@ -34,5 +34,9 @@
   "syncClipsBody": "Text you pinned in the keyboard's clipboard, end-to-end encrypted, on every phone signed in to this account. Pictures and very long texts stay on this phone. Syncs while this app is open and unlocked.",
   "syncClipsCount": "{count, plural, =0{Nothing to sync yet} =1{1 clip synced} other{{count} clips synced}}",
   "syncClipsUnavailable": "The clipboard could not be opened just now. It will try again.",
-  "@syncClipsCount": {"placeholders": {"count": {"type": "int"}}}
+  "@syncClipsCount": {"placeholders": {"count": {"type": "int"}}},
+  "syncSettingsTitle": "Sync my keyboard settings",
+  "syncSettingsBody": "Themes, toolbar, languages and typing options, end-to-end encrypted, on every phone signed in to this account. Sizes, the voice model and custom layout files stay on this phone. Syncs while this app is open and unlocked.",
+  "syncSettingsDone": "Settings are in sync",
+  "syncSettingsUnavailable": "Waiting: another phone on this account runs a newer ZT Keyboard. Update this app to sync settings."
 }

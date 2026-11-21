@@ -185,6 +185,7 @@ class _HomePageState extends ConsumerState<HomePage>
             ),
           if (user != null && !locked) const _SyncWordsTile(),
           if (user != null && !locked) const _SyncClipsTile(),
+          if (user != null && !locked) const _SyncSettingsTile(),
           _Header(l.appHeader),
           const _LanguageTile(),
           const _ThemeTile(),
@@ -528,6 +529,28 @@ class _SyncClipsTile extends ConsumerWidget {
       enabled: ref.watch(clipsSyncEnabledProvider).value ?? false,
       status: ref.watch(clipsSyncProvider),
       onChanged: (on) => ref.read(clipsSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+/// The switch for syncing the keyboard's own settings.
+class _SyncSettingsTile extends ConsumerWidget {
+  const _SyncSettingsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return _SyncTile(
+      key: const Key('sync-settings'),
+      icon: Icons.tune,
+      title: l.syncSettingsTitle,
+      body: l.syncSettingsBody,
+      unavailable: l.syncSettingsUnavailable,
+      count: (_) => l.syncSettingsDone,
+      enabled: ref.watch(settingsSyncEnabledProvider).value ?? false,
+      status: ref.watch(settingsSyncProvider),
+      onChanged: (on) =>
+          ref.read(settingsSyncEnabledProvider.notifier).set(on),
     );
   }
 }

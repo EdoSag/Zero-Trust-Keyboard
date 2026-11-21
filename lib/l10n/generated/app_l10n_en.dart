@@ -132,4 +132,18 @@ class AppL10nEn extends AppL10n {
   @override
   String get syncClipsUnavailable =>
       'The clipboard could not be opened just now. It will try again.';
+
+  @override
+  String get syncSettingsTitle => 'Sync my keyboard settings';
+
+  @override
+  String get syncSettingsBody =>
+      'Themes, toolbar, languages and typing options, end-to-end encrypted, on every phone signed in to this account. Sizes, the voice model and custom layout files stay on this phone. Syncs while this app is open and unlocked.';
+
+  @override
+  String get syncSettingsDone => 'Settings are in sync';
+
+  @override
+  String get syncSettingsUnavailable =>
+      'Waiting: another phone on this account runs a newer ZT Keyboard. Update this app to sync settings.';
 }

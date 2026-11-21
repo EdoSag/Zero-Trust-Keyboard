@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../sync/keyboard_settings.dart';
 import '../sync/personal_word.dart';
 
 /// Where the keyboard stands in the phone's settings.
@@ -86,6 +87,28 @@ class KeyboardHost {
   }) async =>
       await _channel.invokeMethod<bool>('applyPinnedClips', {
         'add': add,
+        'remove': remove,
+      }) ??
+      false;
+
+  /// The keyboard's own settings that can sync, or null when they cannot
+  /// be read now. Settings that belong to this phone (screen sizes, the
+  /// voice model, what was used last) are left out.
+  Future<KeyboardSettings?> keyboardSettings() async {
+    final map = await _channel.invokeMapMethod<Object?, Object?>(
+      'keyboardSettings',
+    );
+    return map == null ? null : KeyboardSettings.fromMap(map);
+  }
+
+  /// Writes [set] and puts [remove] back to their defaults. False when the
+  /// settings could not be changed.
+  Future<bool> applyKeyboardSettings({
+    required Map<String, Object?> set,
+    required List<String> remove,
+  }) async =>
+      await _channel.invokeMethod<bool>('applyKeyboardSettings', {
+        'set': set,
         'remove': remove,
       }) ??
       false;

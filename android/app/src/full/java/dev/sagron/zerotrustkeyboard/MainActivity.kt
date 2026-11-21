@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import dev.sagron.zerotrustkeyboard.sync.KeyboardSettingsSync
 import dev.sagron.zerotrustkeyboard.sync.PersonalWords
 import dev.sagron.zerotrustkeyboard.sync.PinnedClips
 import helium314.keyboard.settings.SettingsActivity2
@@ -65,6 +66,16 @@ class MainActivity : FlutterFragmentActivity() {
                         val add = call.argument<List<String>>("add").orEmpty()
                         val remove = call.argument<List<String>>("remove").orEmpty()
                         answer(result) { PinnedClips.apply(applicationContext, add, remove) }
+                    }
+                    // The keyboard's own settings, without the ones that belong to this phone.
+                    "keyboardSettings" -> answer(result) { KeyboardSettingsSync.all(applicationContext) }
+                    "applyKeyboardSettings" -> {
+                        val set = call.argument<Map<String, Any?>>("set").orEmpty()
+                        val remove = call.argument<List<String>>("remove").orEmpty()
+                        answer(result) {
+                            KeyboardSettingsSync.apply(applicationContext, set, remove)
+                            true
+                        }
                     }
                     else -> result.notImplemented()
                 }

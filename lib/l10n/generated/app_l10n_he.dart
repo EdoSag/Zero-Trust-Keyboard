@@ -132,4 +132,18 @@ class AppL10nHe extends AppL10n {
   @override
   String get syncClipsUnavailable =>
       'לא ניתן לפתוח את לוח ההעתקה כרגע. ננסה שוב.';
+
+  @override
+  String get syncSettingsTitle => 'סנכרון הגדרות המקלדת שלי';
+
+  @override
+  String get syncSettingsBody =>
+      'ערכות נושא, סרגל כלים, שפות ואפשרויות הקלדה, בהצפנה מקצה לקצה, בכל טלפון שמחובר לחשבון הזה. גדלים, מודל הקול וקובצי פריסה מותאמים נשארים בטלפון הזה. הסנכרון פועל כשהאפליקציה פתוחה ולא נעולה.';
+
+  @override
+  String get syncSettingsDone => 'ההגדרות מסונכרנות';
+
+  @override
+  String get syncSettingsUnavailable =>
+      'בהמתנה: טלפון אחר בחשבון הזה מריץ גרסה חדשה יותר של ZT Keyboard. עדכנו את האפליקציה כדי לסנכרן הגדרות.';
 }

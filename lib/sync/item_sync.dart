@@ -9,6 +9,7 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 import '../app/auth_providers.dart';
 import '../app/keyboard_host.dart';
 import 'personal_word.dart';
+import 'keyboard_settings.dart';
 import 'pinned_clip.dart';
 import 'reconcile.dart';
 
@@ -73,35 +74,21 @@ class ItemSyncStatus {
 /// Runs after every finished sync with the account: then everything other
 /// phones changed is here, and comparing cannot mistake "not downloaded
 /// yet" for "deleted".
-abstract class ItemSync<T> extends Notifier<ItemSyncStatus> {
-  static const _uuid = Uuid();
-
+abstract class RoundSync extends Notifier<ItemSyncStatus> {
   /// Which data: part of the preferences' names.
   String get name;
 
   AsyncNotifierProvider<SyncEnabled, bool> get enabledProvider;
 
-  ZtCollection<Synced<T>> get collection;
-
-  /// What makes two entries the same entry.
-  String keyOf(T value);
-
-  /// False for an account item that should not exist.
-  bool valid(T value) => true;
-
-  /// The phone's entries, or null when they cannot be read now. Null must
-  /// never be an empty list: that would delete everything in the account.
-  Future<List<T>?> readPhone(KeyboardHost host);
-
-  /// Changes the phone's entries. False when nothing could be changed.
-  Future<bool> applyToPhone(
-    KeyboardHost host, {
-    required List<T> add,
-    required List<T> remove,
-  });
+  /// Compares and changes both sides once. Null when the sync was switched
+  /// off or the account locked meanwhile.
+  Future<ItemSyncStatus?> round(String userId);
 
   Future<void> _turn = Future.value();
   bool _active = false;
+
+  /// False once the sync was switched off or the account locked.
+  bool get active => _active;
 
   @override
   ItemSyncStatus build() {
@@ -142,22 +129,48 @@ abstract class ItemSync<T> extends Notifier<ItemSyncStatus> {
     _turn = _turn.then((_) async {
       if (!_active) return;
       try {
-        await _run(userId);
+        final status = await round(userId);
+        if (_active && status != null) state = status;
       } on Object catch (e) {
         debugPrint('Sync of $name failed: $e');
         if (_active) state = const ItemSyncStatus(running: true, failed: true);
       }
     });
   }
+}
 
-  Future<void> _run(String userId) async {
+/// [RoundSync] for a list of entries that are added and removed: the
+/// personal dictionary, the pinned clips.
+abstract class ItemSync<T> extends RoundSync {
+  static const _uuid = Uuid();
+
+  ZtCollection<Synced<T>> get collection;
+
+  /// What makes two entries the same entry.
+  String keyOf(T value);
+
+  /// False for an account item that should not exist.
+  bool valid(T value) => true;
+
+  /// The phone's entries, or null when they cannot be read now. Null must
+  /// never be an empty list: that would delete everything in the account.
+  Future<List<T>?> readPhone(KeyboardHost host);
+
+  /// Changes the phone's entries. False when nothing could be changed.
+  Future<bool> applyToPhone(
+    KeyboardHost host, {
+    required List<T> add,
+    required List<T> remove,
+  });
+
+  @override
+  Future<ItemSyncStatus?> round(String userId) async {
     final host = ref.read(keyboardHostProvider);
     final prefs = ref.read(ztPreferencesStoreProvider);
     final phone = await readPhone(host);
-    if (!_active) return;
+    if (!active) return null;
     if (phone == null) {
-      state = const ItemSyncStatus(running: true, unavailable: true);
-      return;
+      return const ItemSyncStatus(running: true, unavailable: true);
     }
     final store = await ref.read(ztLocalStoreProvider.future);
     final account = await collection.list(store);
@@ -169,7 +182,7 @@ abstract class ItemSync<T> extends Notifier<ItemSyncStatus> {
       keyOf: keyOf,
       valid: valid,
     );
-    if (!_active) return;
+    if (!active) return null;
 
     if (changes.addToPhone.isNotEmpty || changes.removeFromPhone.isNotEmpty) {
       final applied = await applyToPhone(
@@ -178,13 +191,10 @@ abstract class ItemSync<T> extends Notifier<ItemSyncStatus> {
         remove: changes.removeFromPhone,
       );
       if (!applied) {
-        if (_active) {
-          state = const ItemSyncStatus(running: true, unavailable: true);
-        }
-        return;
+        return const ItemSyncStatus(running: true, unavailable: true);
       }
     }
-    if (!_active) return;
+    if (!active) return null;
     final sync = ref.read(ztSyncControllerProvider.notifier);
     for (final value in changes.addToAccount) {
       await collection.save(sync, store, Synced(id: _uuid.v4(), value: value));
@@ -193,9 +203,7 @@ abstract class ItemSync<T> extends Notifier<ItemSyncStatus> {
       await collection.delete(sync, id);
     }
     await prefs.write(knownKey, jsonEncode(changes.known.toList()));
-    if (_active) {
-      state = ItemSyncStatus(running: true, synced: changes.known.length);
-    }
+    return ItemSyncStatus(running: true, synced: changes.known.length);
   }
 
   static Set<String> _decodeKnown(String? saved) {
@@ -282,4 +290,70 @@ class ClipsSync extends ItemSync<String> {
 
 final clipsSyncProvider = NotifierProvider<ClipsSync, ItemSyncStatus>(
   ClipsSync.new,
+);
+
+final settingsSyncEnabledProvider = AsyncNotifierProvider<SyncEnabled, bool>(
+  () => SyncEnabled('settings'),
+);
+
+/// The keyboard's own settings: one item in the account, merged setting by
+/// setting.
+class SettingsSync extends RoundSync {
+  @override
+  String get name => 'settings';
+
+  @override
+  AsyncNotifierProvider<SyncEnabled, bool> get enabledProvider =>
+      settingsSyncEnabledProvider;
+
+  @override
+  Future<ItemSyncStatus?> round(String userId) async {
+    final host = ref.read(keyboardHostProvider);
+    final prefs = ref.read(ztPreferencesStoreProvider);
+    final phone = await host.keyboardSettings();
+    if (!active) return null;
+    if (phone == null) {
+      return const ItemSyncStatus(running: true, unavailable: true);
+    }
+    final store = await ref.read(ztLocalStoreProvider.future);
+    final items = await syncedSettingsCollection.list(store);
+    final account = items
+        .where((item) => item.id == KeyboardSettings.itemId)
+        .firstOrNull;
+    final baseKey = 'kb_sync_settings_base_$userId';
+    final merge = mergeSettings(
+      phone: phone,
+      account: account,
+      base: decodeSettingsBase(await prefs.read(baseKey)),
+    );
+    if (!active) return null;
+    if (merge == null) {
+      // The other phone runs a newer app. Nothing is changed on either
+      // side until this one is updated.
+      return const ItemSyncStatus(running: true, unavailable: true);
+    }
+    if (merge.setOnPhone.isNotEmpty || merge.removeFromPhone.isNotEmpty) {
+      final applied = await host.applyKeyboardSettings(
+        set: merge.setOnPhone,
+        remove: merge.removeFromPhone,
+      );
+      if (!applied) {
+        return const ItemSyncStatus(running: true, unavailable: true);
+      }
+    }
+    if (!active) return null;
+    if (merge.upload) {
+      await syncedSettingsCollection.save(
+        ref.read(ztSyncControllerProvider.notifier),
+        store,
+        KeyboardSettings(version: phone.version, values: merge.merged),
+      );
+    }
+    await prefs.write(baseKey, jsonEncode(merge.merged));
+    return ItemSyncStatus(running: true, synced: merge.merged.length);
+  }
+}
+
+final settingsSyncProvider = NotifierProvider<SettingsSync, ItemSyncStatus>(
+  SettingsSync.new,
 );
