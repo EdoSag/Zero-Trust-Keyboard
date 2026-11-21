@@ -4,7 +4,6 @@ package dev.sagron.zerotrustkeyboard.sync
 import android.content.Context
 import helium314.keyboard.latin.NgramContext
 import helium314.keyboard.latin.personalization.PersonalizationHelper
-import helium314.keyboard.latin.personalization.UserHistoryDictionary
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.SubtypeSettings
@@ -36,7 +35,7 @@ object LearnedWordsSync {
             words[locale.toLanguageTag()] = LearnedWords.pick(properties.map {
                 LearnedWords.Entry(
                     it.mWord,
-                    it.mProbabilityInfo.mLevel,
+                    it.mProbabilityInfo.mCount,
                     it.mProbabilityInfo.mTimestamp,
                     it.mIsNotAWord || it.mIsBeginningOfSentence,
                 )
@@ -47,7 +46,8 @@ object LearnedWordsSync {
 
     /**
      * Adds words to the histories of the languages that are turned on here, as words the
-     * keyboard may offer. False when learning is switched off, and nothing was added.
+     * keyboard has seen often enough to send on. False when learning is switched off, and
+     * nothing was added.
      */
     fun add(context: Context, words: Map<String, List<String>>): Boolean {
         if (!learning(context)) return false
@@ -57,8 +57,13 @@ object LearnedWordsSync {
             val history = PersonalizationHelper.getUserHistoryDictionary(context, languages[tag] ?: continue)
             for (word in list) {
                 if (!LearnedWords.valid(word)) continue
-                UserHistoryDictionary.addToDictionary(history, NgramContext.EMPTY_PREV_WORDS_INFO, word, true, now)
+                history.updateEntriesForWord(
+                    NgramContext.EMPTY_PREV_WORDS_INFO, word, true, LearnedWords.MIN_COUNT, now
+                )
             }
+            // Written to its file now: otherwise the words wait for the next time the
+            // keyboard closes, and are lost if the app is closed first.
+            history.onFinishInput()
         }
         return true
     }

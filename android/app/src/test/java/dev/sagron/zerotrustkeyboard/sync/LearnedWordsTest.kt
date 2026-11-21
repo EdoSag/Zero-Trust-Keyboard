@@ -8,16 +8,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LearnedWordsTest {
-    @Test fun `only words the keyboard already offers are sent`() {
+    @Test fun `only words typed more than once are sent`() {
         val picked = LearnedWords.pick(
             listOf(
-                Entry("zerotrust", 3, 100, false),
-                Entry("typo", 0, 100, false),
+                Entry("zerotrust", 30, 100, false),
+                Entry("nothing", 0, 100, false),
                 Entry("once", 1, 100, false),
                 Entry("שלום", 2, 100, false),
             )
         )
         assertEquals(listOf("zerotrust", "שלום"), picked)
+    }
+
+    @Test fun `a word added with the count it arrives with is sent back`() {
+        val picked = LearnedWords.pick(listOf(Entry("arrived", LearnedWords.MIN_COUNT, 100, false)))
+        assertEquals(listOf("arrived"), picked)
     }
 
     @Test fun `entries that are not words stay`() {
