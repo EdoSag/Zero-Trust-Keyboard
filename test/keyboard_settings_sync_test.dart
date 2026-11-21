@@ -73,6 +73,33 @@ void main() {
     expect(here.upload, isTrue);
   });
 
+  test('a held setting is left alone on both sides', () {
+    const key = 's:enabled_subtypes';
+    final merge = mergeSettings(
+      phone: KeyboardSettings(
+        version: 4201,
+        values: {'b:auto_cap': true},
+        held: {key},
+      ),
+      account: settings({'b:auto_cap': true, key: 'en;he'}),
+      base: {'b:auto_cap': true, key: 'en'},
+    )!;
+    expect(merge.setOnPhone, isEmpty);
+    expect(merge.removeFromPhone, isEmpty);
+    expect(merge.merged[key], 'en;he');
+    expect(merge.upload, isFalse);
+  });
+
+  test('held names come from the phone and never reach the account', () {
+    final phone = KeyboardSettings.fromMap({
+      'version': 4201,
+      'prefs': {'b:auto_cap': true},
+      'held': ['s:enabled_subtypes'],
+    });
+    expect(phone.held, {'s:enabled_subtypes'});
+    expect(phone.toMap().containsKey('held'), isFalse);
+  });
+
   test('in step: nothing to do', () {
     final values = {
       'b:auto_cap': false,

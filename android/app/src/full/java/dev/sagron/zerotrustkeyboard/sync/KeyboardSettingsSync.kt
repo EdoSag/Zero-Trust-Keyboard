@@ -16,14 +16,21 @@ object KeyboardSettingsSync {
     /**
      * The settings that sync, with the version of the settings format: a newer keyboard can
      * move settings to new names, so the app only takes settings written by the same version.
+     * "held" names the language lists that stay as they are here (see [SettingValues.held]).
      */
     fun all(context: Context): Map<String, Any> {
         val values = HashMap<String, Any>()
+        val held = ArrayList<String>()
         for ((name, value) in context.prefs().all) {
-            val (typedName, encoded) = SettingValues.encode(name ?: continue, value) ?: continue
+            if (name == null) continue
+            if (SettingValues.held(name, value)) {
+                held.add("s:$name")
+                continue
+            }
+            val (typedName, encoded) = SettingValues.encode(name, value) ?: continue
             values[typedName] = encoded
         }
-        return mapOf("version" to BuildConfig.UPSTREAM_VERSION_CODE, "prefs" to values)
+        return mapOf("version" to BuildConfig.UPSTREAM_VERSION_CODE, "prefs" to values, "held" to held)
     }
 
     /**
@@ -36,12 +43,15 @@ object KeyboardSettingsSync {
         val current = prefs.all
         prefs.edit {
             for (typedName in remove) {
-                remove(SettingValues.nameOf(typedName) ?: continue)
+                val name = SettingValues.nameOf(typedName) ?: continue
+                if (SettingValues.held(name, current[name])) continue
+                remove(name)
             }
             for ((typedName, value) in set) {
                 val (name, decoded) = SettingValues.decode(typedName, value) ?: continue
                 val old = current[name]
                 if (old != null && !sameType(old, decoded)) continue
+                if (SettingValues.held(name, old)) continue
                 when (decoded) {
                     is Boolean -> putBoolean(name, decoded)
                     is Int -> putInt(name, decoded)

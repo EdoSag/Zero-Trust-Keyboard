@@ -28,6 +28,20 @@ object SettingValues {
         "layout_", "saved_app_subtype_", "gesture_data",
     )
 
+    /** The settings that list languages with their layouts. */
+    private val LAYOUT_LISTS = setOf("additional_subtypes", "enabled_subtypes")
+
+    /** How a layout the user made is named inside those lists; its file is only on this phone. */
+    private const val OWN_LAYOUT = "custom."
+
+    /**
+     * True for a language list that names a layout the user made. The list then stays as it
+     * is on this phone and is neither sent nor replaced: another phone does not have the
+     * layout's file, and taking that phone's list would drop the layout here.
+     */
+    fun held(name: String, value: Any?): Boolean =
+        name in LAYOUT_LISTS && value is String && value.contains(OWN_LAYOUT)
+
     fun syncs(name: String): Boolean =
         name.isNotEmpty() && name !in STAYS && STAYS_PREFIXES.none { name.startsWith(it) }
 
@@ -36,7 +50,7 @@ object SettingValues {
      * exactly. Null for a setting that stays, and for a value of a type settings never have.
      */
     fun encode(name: String, value: Any?): Pair<String, Any>? {
-        if (!syncs(name)) return null
+        if (!syncs(name) || held(name, value)) return null
         return when (value) {
             is Boolean -> "b:$name" to value
             is Int -> "i:$name" to value
@@ -68,7 +82,7 @@ object SettingValues {
             'S' -> (value as? List<*>)?.takeIf { list -> list.all { it is String } }?.filterIsInstance<String>()?.toSet()
             else -> null
         }
-        return decoded?.let { name to it }
+        return decoded?.takeIf { !held(name, it) }?.let { name to it }
     }
 
     /** The name inside a typed name, or null when it is not one or the setting stays. */

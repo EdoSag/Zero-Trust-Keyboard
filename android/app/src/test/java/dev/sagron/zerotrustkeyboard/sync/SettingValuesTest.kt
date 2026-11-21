@@ -70,6 +70,20 @@ class SettingValuesTest {
         assertNull(SettingValues.encode("auto_cap", 1.5))
     }
 
+    @Test fun `a language list with a layout the user made is held, not sent or taken`() {
+        val own = "en;KeyboardLayoutSet=MAIN:custom.mine."
+        assertTrue(SettingValues.held("additional_subtypes", own))
+        assertTrue(SettingValues.held("enabled_subtypes", own))
+        assertFalse(SettingValues.held("additional_subtypes", "en;KeyboardLayoutSet=MAIN:qwerty"))
+        assertFalse(SettingValues.held("space_bar_text", "custom.text"))
+        assertNull(SettingValues.encode("additional_subtypes", own))
+        assertNull(SettingValues.decode("s:additional_subtypes", own))
+        assertEquals(
+            "s:additional_subtypes" to "en;KeyboardLayoutSet=MAIN:qwerty",
+            SettingValues.encode("additional_subtypes", "en;KeyboardLayoutSet=MAIN:qwerty"),
+        )
+    }
+
     @Test fun `a setting that stays is refused in both directions`() {
         assertNull(SettingValues.encode("zt_voice_model", "large"))
         assertNull(SettingValues.decode("s:zt_voice_model", "large"))

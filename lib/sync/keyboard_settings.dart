@@ -5,7 +5,11 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 /// The keyboard's own settings, as the native side gives them and as the
 /// account keeps them.
 class KeyboardSettings {
-  const KeyboardSettings({required this.version, required this.values});
+  const KeyboardSettings({
+    required this.version,
+    required this.values,
+    this.held = const {},
+  });
 
   /// The one item that holds the settings. A fixed id says nothing about
   /// what is inside.
@@ -23,9 +27,19 @@ class KeyboardSettings {
   /// compared as JSON and handed back as they came.
   final Map<String, Object?> values;
 
+  /// Settings this phone keeps as they are for now, and that are not in
+  /// [values]: a language list that names a layout the user made, whose
+  /// file is only on this phone. They are neither sent nor replaced, and
+  /// the account keeps what it has. Never part of the account's item.
+  final Set<String> held;
+
   factory KeyboardSettings.fromMap(Map<Object?, Object?> map) =>
       KeyboardSettings(
         version: (map['version'] as num?)?.toInt() ?? 0,
+        held: {
+          for (final name in map['held'] as List<Object?>? ?? const [])
+            if (name is String) name,
+        },
         values: {
           for (final MapEntry(:key, :value)
               in (map['prefs'] as Map<Object?, Object?>? ?? const {}).entries)
@@ -78,6 +92,9 @@ class SettingsMerge {
 /// With no [base] (first sync on this phone) the account's settings are
 /// taken, and settings only this phone has are added to them.
 ///
+/// A setting the phone holds ([KeyboardSettings.held]) is left alone on
+/// both sides.
+///
 /// Null when the account's settings were written by a newer app: then
 /// nothing may be changed. Settings written by an older app are replaced by
 /// this phone's.
@@ -101,7 +118,9 @@ SettingsMerge? mergeSettings({
     final onPhone = phone.values[key];
     final inAccount = account.values[key];
     final Object? value;
-    if (base == null) {
+    if (phone.held.contains(key)) {
+      value = inAccount;
+    } else if (base == null) {
       value = inAccount ?? onPhone;
     } else {
       value = _same(inAccount, base[key]) ? onPhone : inAccount;
@@ -112,7 +131,8 @@ SettingsMerge? mergeSettings({
     merged: merged,
     setOnPhone: {
       for (final MapEntry(:key, :value) in merged.entries)
-        if (!_same(value, phone.values[key])) key: value,
+        if (!phone.held.contains(key) && !_same(value, phone.values[key]))
+          key: value,
     },
     removeFromPhone: [
       for (final key in phone.values.keys)
