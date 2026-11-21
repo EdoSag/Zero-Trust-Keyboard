@@ -106,6 +106,9 @@ editions, signed, plus a Google Play bundle of the full edition, and publishes t
 GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
 keyboard's unit tests and the app's widget tests.
 
+The Google Play listing (title, descriptions, icon and feature graphic, in English and Hebrew)
+is in `fastlane/metadata/android/`. Screenshots are added there by hand.
+
 Local builds need Flutter 3.47.9, the Android SDK and NDK, and a `.env` with `SUPABASE_URL`
 and `SUPABASE_ANON_KEY`. The app version is the `version:` line of `pubspec.yaml`.
 
