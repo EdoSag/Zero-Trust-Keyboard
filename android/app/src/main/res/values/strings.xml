@@ -1325,6 +1325,10 @@ New dictionary:
     <string name="zt_voice_listening">Listening…</string>
     <string name="zt_voice_listening_time">Listening… %1$d:%2$02d</string>
     <string name="zt_voice_working">Writing it down…</string>
+    <string name="zt_voice_working_time">Writing it down… %1$d:%2$02d</string>
+    <string name="zt_voice_last_time">Last time: %1$s seconds of speech were written in %2$s seconds with %3$s.</string>
+    <string name="zt_voice_last_time_load">Opening the model took %1$s more seconds. It stays open for a few minutes.</string>
+    <string name="zt_voice_speed_hint">A smaller model writes faster and makes more mistakes.</string>
     <string name="zt_voice_done">Done</string>
     <string name="zt_voice_cancel">Cancel</string>
     <string name="zt_voice_needs_model">Add a speech model to use voice typing</string>

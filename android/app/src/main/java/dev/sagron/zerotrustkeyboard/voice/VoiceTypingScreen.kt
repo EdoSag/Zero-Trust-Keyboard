@@ -59,6 +59,7 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
     var microphone by remember { mutableStateOf(hasMicrophone(context)) }
     var askedBefore by remember { mutableStateOf(false) }
     var toDownload by remember { mutableStateOf<VoiceOffer?>(null) }
+    var lastTiming by remember { mutableStateOf(VoiceModels.lastTiming(context)) }
     val listState by VoiceDownloads.listState.collectAsState()
     val offers by VoiceDownloads.offers.collectAsState()
     val download by VoiceDownloads.progress.collectAsState()
@@ -78,6 +79,8 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
     // The permission can change in the system settings while this screen is in the back.
     LifecycleResumeEffect(Unit) {
         microphone = hasMicrophone(context)
+        // A dictation in another app, while this screen stayed open behind it.
+        lastTiming = VoiceModels.lastTiming(context)
         onPauseOrDispose { }
     }
     val askMicrophone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -183,6 +186,21 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
                         if (copiedMegabytes < 0) picker.launch(MODEL_FILE_INTENT)
                     },
                 )
+                val last = lastTiming
+                if (last != null) {
+                    var text = stringResource(
+                        R.string.zt_voice_last_time, seconds(last.speechMillis), seconds(last.workMillis),
+                        VoiceModels.label(last.model),
+                    )
+                    if (last.loadMillis >= 1000) {
+                        text += " " + stringResource(R.string.zt_voice_last_time_load, seconds(last.loadMillis))
+                    }
+                    Text(
+                        text + " " + stringResource(R.string.zt_voice_speed_hint),
+                        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 if (VoiceDownloads.available) {
                     PreferenceCategory(stringResource(R.string.zt_voice_download))
                     val running = download
@@ -286,3 +304,6 @@ private fun hasMicrophone(context: android.content.Context) =
 private val MODEL_FILE_INTENT: Intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
     .addCategory(Intent.CATEGORY_OPENABLE)
     .setType("*/*")
+
+/** Milliseconds as seconds with one decimal, in the reader's digits and decimal mark. */
+private fun seconds(millis: Long): String = String.format(Locale.getDefault(), "%.1f", millis / 1000.0)

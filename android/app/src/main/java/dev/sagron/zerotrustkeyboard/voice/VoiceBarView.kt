@@ -83,10 +83,12 @@ class VoiceBarView @JvmOverloads constructor(context: Context, attrs: AttributeS
         else context.getString(R.string.zt_voice_listening)
     }
 
-    fun showWorking() {
+    /** @param seconds how long the phone has been working on the words */
+    fun showWorking(seconds: Int) {
         level.visibility = GONE
         done.visibility = GONE
-        status.setText(R.string.zt_voice_working)
+        status.text = if (seconds < 2) context.getString(R.string.zt_voice_working)
+        else context.getString(R.string.zt_voice_working_time, seconds / 60, seconds % 60)
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()

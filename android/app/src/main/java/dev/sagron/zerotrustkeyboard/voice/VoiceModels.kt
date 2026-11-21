@@ -20,6 +20,9 @@ object VoiceModels {
     const val PREF_STOP_ON_PAUSE = "zt_voice_stop_on_pause"
     const val DEFAULT_STOP_ON_PAUSE = true
 
+    /** The last dictation: "<speech ms> <load ms> <work ms> <model file>". No words. */
+    const val PREF_LAST_TIMING = "zt_voice_last_timing"
+
     private const val EXTENSION = ".bin"
     private const val PARTIAL = ".part"
 
@@ -37,6 +40,18 @@ object VoiceModels {
     fun installed(context: Context): List<File> =
         directory(context).listFiles { file -> file.isFile && file.name.endsWith(EXTENSION) }
             ?.sortedBy { it.name } ?: emptyList()
+
+    /** The last dictation's times, or null when there was none yet. */
+    fun lastTiming(context: Context): VoiceEngine.Timing? = parseTiming(context.prefs().getString(PREF_LAST_TIMING, null))
+
+    fun parseTiming(saved: String?): VoiceEngine.Timing? {
+        val parts = saved?.split(" ", limit = 4) ?: return null
+        if (parts.size != 4) return null
+        val speech = parts[0].toLongOrNull() ?: return null
+        val load = parts[1].toLongOrNull() ?: return null
+        val work = parts[2].toLongOrNull() ?: return null
+        return VoiceEngine.Timing(parts[3], speech, load, work)
+    }
 
     /** The pick among the models for every language is kept under [PREF_ACTIVE_MODEL]; the pick
      *  among the models tuned for one language under that name plus "_" and the language. */

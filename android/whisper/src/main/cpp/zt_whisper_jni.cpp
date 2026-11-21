@@ -85,7 +85,7 @@ Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_allow(JNIEnv *, jclass, jl
 JNIEXPORT jbyteArray JNICALL
 Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_transcribe(
         JNIEnv *env, jclass, jlong handle, jfloatArray samples, jint count, jstring language,
-        jstring prompt, jint threads, jint beamSize) {
+        jstring prompt, jint threads, jint beamSize, jint audioContext) {
     auto *engine = reinterpret_cast<Engine *>(handle);
     if (engine == nullptr || count <= 0) return nullptr;
 
@@ -103,7 +103,18 @@ Java_dev_sagron_zerotrustkeyboard_voice_WhisperNative_transcribe(
 
     whisper_full_params params = whisper_full_default_params(
             beamSize > 1 ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY);
-    if (beamSize > 1) params.beam_search.beam_size = beamSize;
+    if (beamSize > 1) {
+        params.beam_search.beam_size = beamSize;
+    } else {
+        params.greedy.best_of = 1;
+    }
+    // Whisper always works on a 30 second window. For a short sentence most of it is
+    // silence, and listening to only the part that holds speech is several times faster.
+    const int fullContext = whisper_n_audio_ctx(engine->context);
+    if (audioContext > 0 && audioContext < fullContext) {
+        params.audio_ctx = audioContext;
+        params.single_segment = true;
+    }
     params.n_threads = threads > 0 ? threads : 4;
     params.translate = false;
     params.no_context = true;
