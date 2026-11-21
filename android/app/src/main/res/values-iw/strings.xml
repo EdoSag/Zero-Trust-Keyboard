@@ -635,4 +635,5 @@
     <string name="zt_translate_not_here">"סיסמאות אינן מתורגמות"</string>
     <string name="zt_translate_needs_languages">"קודם יש להוריד את השפות לתרגום"</string>
     <string name="zt_translate_failed">"התרגום נכשל, נסו שוב"</string>
+    <string name="zt_translate_text_changed">"הטקסט השתנה, ולכן לא תורגם"</string>
 </resources>
