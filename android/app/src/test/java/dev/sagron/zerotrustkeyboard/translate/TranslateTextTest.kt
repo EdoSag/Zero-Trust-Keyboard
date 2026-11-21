@@ -2,7 +2,9 @@
 package dev.sagron.zerotrustkeyboard.translate
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TranslateTextTest {
@@ -42,5 +44,18 @@ class TranslateTextTest {
         assertEquals("", TranslateText.join(TranslateText.pieces(""), emptyList()))
         // A missing translation leaves the original in place rather than dropping it.
         assertEquals("a\nb", TranslateText.join(TranslateText.pieces("a\nb"), listOf("a")))
+    }
+
+    @Test fun `a translation is only put where the text still is`() {
+        assertTrue(TranslateText.holds("שלום עולם", 0, 0, "שלום עולם"))
+        assertTrue(TranslateText.holds("say שלום now", 0, 4, "שלום"))
+        // The app handed out its text from position 100 on.
+        assertTrue(TranslateText.holds("say שלום now", 100, 104, "שלום"))
+        // Cut, pasted over or shifted since: not there any more.
+        assertFalse(TranslateText.holds("say now", 0, 4, "שלום"))
+        assertFalse(TranslateText.holds("well, say שלום now", 0, 4, "שלום"))
+        assertFalse(TranslateText.holds("say שלו", 0, 4, "שלום"))
+        assertFalse(TranslateText.holds("שלום", 10, 4, "שלום"))
+        assertTrue(TranslateText.holds("anything", 0, 3, ""))
     }
 }

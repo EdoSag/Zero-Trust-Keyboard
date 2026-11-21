@@ -112,4 +112,14 @@ object TranslateText {
         }
         return out.toString()
     }
+
+    /**
+     * True when [whole], a stretch of the text field that begins at position [offset] of it,
+     * has exactly [expected] at position [start] of the text field.
+     */
+    fun holds(whole: String, offset: Int, start: Int, expected: String): Boolean {
+        val from = start - offset
+        if (from < 0 || from + expected.length > whole.length) return false
+        return whole.regionMatches(from, expected, 0, expected.length)
+    }
 }
