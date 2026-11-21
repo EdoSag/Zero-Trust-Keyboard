@@ -71,6 +71,24 @@ class KeyboardHost {
         'remove': [for (final w in remove) w.toMap()],
       }) ??
       false;
+
+  /// The text clips pinned in the keyboard's clipboard, or null when the
+  /// clipboard cannot be opened now. Pictures and very long texts are left
+  /// out: they stay on this phone.
+  Future<List<String>?> pinnedClips() =>
+      _channel.invokeListMethod<String>('pinnedClips');
+
+  /// Pins [add] (adding the ones the clipboard does not hold) and unpins
+  /// [remove]. False when the clipboard cannot be opened.
+  Future<bool> applyPinnedClips({
+    required List<String> add,
+    required List<String> remove,
+  }) async =>
+      await _channel.invokeMethod<bool>('applyPinnedClips', {
+        'add': add,
+        'remove': remove,
+      }) ??
+      false;
 }
 
 final keyboardHostProvider = Provider<KeyboardHost>(
