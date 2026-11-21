@@ -114,7 +114,7 @@ class SwipeDecoderTest {
 
     private fun decodeAfter(word: String, usualNext: String, fit: Float = 0.7f): List<String> {
         val (xs, ys) = swipe(word, qwerty)
-        return SwipeDecoder().decode(xs, ys, xs.size, qwerty, listOf(english)) { _, candidate ->
+        return SwipeDecoder().decode(xs, ys, xs.size, qwerty, listOf(english)) { _, candidate, _ ->
             if (candidate == usualNext) fit else 0f
         }.map { it.word }
     }
