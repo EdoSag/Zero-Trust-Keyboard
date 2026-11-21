@@ -8,6 +8,7 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 import '../app/auth_providers.dart';
 import '../app/keyboard_config.dart';
 import '../app/keyboard_host.dart';
+import '../sync/words_sync.dart';
 import '../l10n/l10n.dart';
 import 'account_page.dart';
 
@@ -182,6 +183,7 @@ class _HomePageState extends ConsumerState<HomePage>
               trailing: const Icon(Icons.chevron_right),
               onTap: _openAccount,
             ),
+          if (user != null && !locked) const _SyncWordsTile(),
           _Header(l.appHeader),
           const _LanguageTile(),
           const _ThemeTile(),
@@ -482,6 +484,39 @@ class _ThemeTile extends ConsumerWidget {
           await ref.read(themeModeProvider.notifier).set(picked);
         }
       },
+    );
+  }
+}
+
+/// The switch for syncing the personal dictionary, shown while the account
+/// is unlocked. Off until the user turns it on.
+class _SyncWordsTile extends ConsumerWidget {
+  const _SyncWordsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final enabled = ref.watch(wordsSyncEnabledProvider).value ?? false;
+    final status = ref.watch(wordsSyncProvider);
+    final String note;
+    if (!enabled) {
+      note = l.syncWordsBody;
+    } else if (status.keyboardOff) {
+      note = l.syncWordsKeyboardOff;
+    } else if (status.failed) {
+      note = l.syncWordsFailed;
+    } else if (status.synced case final int count) {
+      note = l.syncWordsCount(count);
+    } else {
+      note = l.syncWordsBody;
+    }
+    return SwitchListTile(
+      key: const Key('sync-words'),
+      secondary: const Icon(Icons.sync_lock_outlined),
+      title: Text(l.syncWordsTitle),
+      subtitle: Text(note),
+      value: enabled,
+      onChanged: (on) => ref.read(wordsSyncEnabledProvider.notifier).set(on),
     );
   }
 }
