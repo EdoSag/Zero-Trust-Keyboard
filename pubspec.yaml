@@ -1,7 +1,7 @@
 name: zerotrust_keyboard
 description: "Zero-Trust Keyboard: a private keyboard. Everything you type stays on your phone."
 publish_to: none
-version: 0.5.3+13
+version: 0.6.0+14
 
 environment:
   sdk: ^3.9.0

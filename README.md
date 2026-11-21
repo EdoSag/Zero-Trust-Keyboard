@@ -11,8 +11,10 @@ Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-d
 typing, on-device translation, and optional end-to-end encrypted sync of your personal
 dictionary through your Zero-Trust account.
 
-The Hebrew dictionary (94,799 words) is built from the Android Open Source Project's Hebrew
-word list, see [dictionaries/README.md](dictionaries/README.md).
+The Hebrew dictionary (181,813 words) is our own "ZT Hebrew" list: the Android Open Source
+Project's Hebrew word list, widened with the words people really use (from OpenSubtitles
+counts) that the Hspell speller accepts. Sources, licences and how it is built are in
+[dictionaries/README.md](dictionaries/README.md).
 
 Signed in, you can turn on **Sync my personal dictionary** in the ZT Keyboard app: the words and
 shortcuts you added are kept the same on every phone of the account, end-to-end encrypted. It is
