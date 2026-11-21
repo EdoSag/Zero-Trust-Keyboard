@@ -39,10 +39,13 @@ class SwipeDecoder {
      * @param xs,ys the finger path in keyboard pixels, [count] points
      * @param lexicons the languages in use; a word found in several is returned once
      * @param weights how much each lexicon counts (1 = fully), same order as [lexicons]
+     * @param fitsContext how well a word of a lexicon follows the words before it, 0 (no
+     *   idea) to 1 (the usual next word), see [contextFit]; null when nothing is known
      */
     fun decode(
         xs: IntArray, ys: IntArray, count: Int, layout: SwipeLayout,
         lexicons: List<SwipeLexicon>, weights: FloatArray? = null, maxResults: Int = 18,
+        fitsContext: ((lexicon: Int, word: String, frequency: Int) -> Float)? = null,
     ): List<SwipeCandidate> {
         if (count < 2 || layout.size == 0) return emptyList()
         val kw = layout.keyWidth
@@ -100,9 +103,11 @@ class SwipeDecoder {
             val weight = weights?.getOrNull(entry.lexicon) ?: 1f
             val ends = (sq(inX[0] - polyX[0], inY[0] - polyY[0]) +
                 sq(inX[POINTS - 1] - polyX[m - 1], inY[POINTS - 1] - polyY[m - 1])) / (kw * kw)
+            val word = lexicon.word(entry.id)
+            val context = fitsContext?.invoke(entry.lexicon, word, frequency)?.coerceIn(0f, 1f) ?: 0f
             val score = -(SHAPE_WEIGHT * entry.cost + LETTER_WEIGHT * letters + END_WEIGHT * ends) +
-                FREQUENCY_WEIGHT * frequency + LEXICON_WEIGHT * (weight - 1f)
-            results.add(SwipeCandidate(lexicon.word(entry.id), score, frequency, entry.lexicon))
+                FREQUENCY_WEIGHT * frequency + LEXICON_WEIGHT * (weight - 1f) + CONTEXT_WEIGHT * context
+            results.add(SwipeCandidate(word, score, frequency, entry.lexicon))
         }
         results.sortByDescending { it.score }
         // A word that is in several lexicons is offered once, with its best score.
@@ -208,6 +213,26 @@ class SwipeDecoder {
 
         /** Bonus or penalty for a secondary language's lexicon weight. */
         private const val LEXICON_WEIGHT = 2.0f
+
+        /**
+         * For a word that usually follows the word before it. Enough to choose between
+         * words whose swipes look alike ("the" and "there"), also against a much more
+         * common word, and not enough to replace a word that was swiped clearly.
+         */
+        private const val CONTEXT_WEIGHT = 5.0f
+
+        /**
+         * How well a word follows the words before it, 0..1, from two dictionary
+         * probabilities (0..255, or negative for unknown): the word's own, and the word's
+         * after those words. A dictionary that knows the pair gives the second one higher;
+         * how much of the room up to 255 it takes is the strength of the pair.
+         */
+        fun contextFit(alone: Int, afterPrevious: Int): Float {
+            if (alone < 0 || afterPrevious <= alone) return 0f
+            return ((afterPrevious - alone).toFloat() / (MAX_PROBABILITY - alone).coerceAtLeast(1)).coerceIn(0f, 1f)
+        }
+
+        private const val MAX_PROBABILITY = 255
 
         private fun sq(dx: Float, dy: Float): Float = dx * dx + dy * dy
         private fun dist(dx: Float, dy: Float): Float = sqrt(dx * dx + dy * dy)

@@ -122,6 +122,18 @@ public final class ReadOnlyBinaryDictionary extends Dictionary {
     }
 
     @Override
+    public int getNgramProbability(final NgramContext ngramContext, final String word) {
+        if (mLock.readLock().tryLock()) {
+            try {
+                return mBinaryDictionary.getNgramProbability(ngramContext, word);
+            } finally {
+                mLock.readLock().unlock();
+            }
+        }
+        return NOT_A_PROBABILITY;
+    }
+
+    @Override
     public int getMaxFrequencyOfExactMatches(final String word) {
         if (mLock.readLock().tryLock()) {
             try {
