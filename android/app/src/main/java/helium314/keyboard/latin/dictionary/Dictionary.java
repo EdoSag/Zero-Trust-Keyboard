@@ -122,6 +122,15 @@ public abstract class Dictionary {
     }
 
     /**
+     * How likely the word is after the words before it, on the same scale as
+     * {@link #getFrequency}. Used by swipe typing to tell look-alike words apart.
+     * @return {@link #NOT_A_PROBABILITY} when this dictionary cannot tell
+     */
+    public int getNgramProbability(final NgramContext ngramContext, final String word) {
+        return NOT_A_PROBABILITY;
+    }
+
+    /**
      * Get the maximum frequency of the word.
      * @param word the word to get the maximum frequency of.
      */

@@ -112,6 +112,43 @@ class SwipeDecoderTest {
         assertEquals(listOf("put", "pit", "pot"), decode("pit", qwerty, english).take(3))
     }
 
+    private fun decodeAfter(word: String, usualNext: String, fit: Float = 0.7f): List<String> {
+        val (xs, ys) = swipe(word, qwerty)
+        return SwipeDecoder().decode(xs, ys, xs.size, qwerty, listOf(english)) { _, candidate ->
+            if (candidate == usualNext) fit else 0f
+        }.map { it.word }
+    }
+
+    @Test fun thePreviousWordChoosesBetweenLookAlikes() {
+        // Alone, the more common word wins each of these.
+        assertEquals("the", decode("there", qwerty, english).first())
+        assertEquals("put", decode("pit", qwerty, english).first())
+        // After a word that is usually followed by the other one, that one wins.
+        assertEquals("there", decodeAfter("there", "there").first())
+        assertEquals("pit", decodeAfter("pit", "pit").first())
+        assertEquals("pot", decodeAfter("pot", "pot").first())
+        assertEquals("its", decodeAfter("its", "its").first())
+    }
+
+    @Test fun thePreviousWordDoesNotReplaceAClearSwipe() {
+        // Even the strongest pair does not turn a clearly swiped word into another one.
+        assertEquals("keyboard", decodeAfter("keyboard", "world", fit = 1f).first())
+        assertEquals("world", decodeAfter("world", "would", fit = 1f).first())
+        assertEquals("would", decodeAfter("would", "word", fit = 1f).first())
+        assertEquals("help", decodeAfter("help", "hell", fit = 1f).first())
+    }
+
+    @Test fun contextFitIsTheShareOfTheRoomAboveTheWordsOwnProbability() {
+        // Unknown pair: the dictionary answers "not a probability" or nothing higher.
+        assertEquals(0f, SwipeDecoder.contextFit(170, -1), 0f)
+        assertEquals(0f, SwipeDecoder.contextFit(170, 170), 0f)
+        assertEquals(0f, SwipeDecoder.contextFit(-1, 200), 0f)
+        // Halfway from 155 to 255.
+        assertEquals(0.5f, SwipeDecoder.contextFit(155, 205), 0.001f)
+        assertEquals(1f, SwipeDecoder.contextFit(100, 255), 0f)
+        assertEquals(1f, SwipeDecoder.contextFit(255, 300), 0f)
+    }
+
     @Test fun capitalsAndAccentsAreKeptInTheResult() {
         assertEquals("Paris", decode("paris", qwerty, english).first())
         // Same keys for both: the more common spelling wins, the other is offered too.

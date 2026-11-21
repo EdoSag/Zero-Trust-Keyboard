@@ -2,6 +2,7 @@
 package dev.sagron.zerotrustkeyboard.swipe
 
 import helium314.keyboard.keyboard.Keyboard
+import helium314.keyboard.latin.NgramContext
 import helium314.keyboard.latin.common.InputPointers
 import helium314.keyboard.latin.dictionary.Dictionary
 import helium314.keyboard.latin.utils.Log
@@ -64,7 +65,9 @@ object SwipeTyping {
      * being read (the first seconds after the keyboard starts) or when the keyboard has
      * no letters (symbols, numbers).
      */
-    fun decode(pointers: InputPointers, keyboard: Keyboard, sources: List<Source>): List<Result> {
+    fun decode(
+        pointers: InputPointers, keyboard: Keyboard, sources: List<Source>, ngramContext: NgramContext,
+    ): List<Result> {
         val count = pointers.pointerSize
         if (count < 2) return emptyList()
         val ready = ArrayList<Pair<Source, Entry>>(sources.size)
@@ -75,9 +78,29 @@ object SwipeTyping {
         if (ready.isEmpty()) return emptyList()
         val lexicons = ready.map { it.second.lexicon!! }
         val weights = FloatArray(ready.size) { ready[it].first.weight }
+        val contexts = contextsOf(ngramContext)
+        // How well a word follows the words before the cursor, by the dictionary it is from.
+        // A dictionary that is being written to answers late; then the swipe does not wait.
+        var busy = false
+        fun fit(lexicon: Int, word: String): Float {
+            if (busy) return 0f
+            val started = System.nanoTime()
+            val dictionary = ready[lexicon].first.dictionary
+            val alone = dictionary.getFrequency(word)
+            var best = 0f
+            for (context in contexts) {
+                best = maxOf(best, SwipeDecoder.contextFit(alone, dictionary.getNgramProbability(context, word)))
+            }
+            if (System.nanoTime() - started > SLOW_LOOKUP_NANOS) busy = true
+            return best
+        }
+        val fitsContext: ((Int, String) -> Float)? = if (contexts.isEmpty()) null else ::fit
         val candidates = synchronized(decoder) {
             val layout = layoutFor(keyboard)
-            decoder.decode(pointers.xCoordinates, pointers.yCoordinates, count, layout, lexicons, weights)
+            decoder.decode(
+                pointers.xCoordinates, pointers.yCoordinates, count, layout, lexicons, weights,
+                fitsContext = fitsContext,
+            )
         }
         if (candidates.isEmpty()) return emptyList()
         val best = candidates[0].score
@@ -89,6 +112,21 @@ object SwipeTyping {
             Result(candidate.word, score, source.dictionary, candidate.word in entry.offensive)
         }
     }
+
+    /**
+     * The words before the cursor, as the dictionaries are asked about them: as written,
+     * and with a small first letter, because a dictionary knows "the cat" and not "The cat".
+     */
+    private fun contextsOf(ngramContext: NgramContext): List<NgramContext> {
+        if (!ngramContext.isValid) return emptyList()
+        if (ngramContext.isBeginningOfSentenceContext) return listOf(ngramContext)
+        val previous = ngramContext.getNthPrevWord(1)?.toString() ?: return listOf(ngramContext)
+        val small = previous.replaceFirstChar { it.lowercase() }
+        if (small == previous) return listOf(ngramContext)
+        return listOf(ngramContext, NgramContext(NgramContext.WordInfo(small)))
+    }
+
+    private const val SLOW_LOOKUP_NANOS = 20_000_000L
 
     private const val SCORE_BASE = 1_500_000
     private const val SCORE_PER_UNIT = 10_000f

@@ -89,6 +89,16 @@ public final class DictionaryCollection extends Dictionary {
     }
 
     @Override
+    public int getNgramProbability(final NgramContext ngramContext, final String word) {
+        int maxFreq = -1;
+        for (int i = mDictionaries.size() - 1; i >= 0; --i) {
+            final int tempFreq = mDictionaries.get(i).getNgramProbability(ngramContext, word);
+            maxFreq = Math.max(tempFreq, maxFreq);
+        }
+        return maxFreq;
+    }
+
+    @Override
     public int getMaxFrequencyOfExactMatches(final String word) {
         int maxFreq = -1;
         for (int i = mDictionaries.size() - 1; i >= 0; --i) {
