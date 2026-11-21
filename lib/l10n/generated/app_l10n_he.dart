@@ -109,4 +109,41 @@ class AppL10nHe extends AppL10n {
 
   @override
   String get syncWordsFailed => 'הסנכרון לא הצליח כרגע. הוא ינסה שוב.';
+
+  @override
+  String get syncClipsTitle => 'סנכרון הקטעים שנעצתי';
+
+  @override
+  String get syncClipsBody =>
+      'טקסט שנעצתם בלוח ההעתקה של המקלדת, בהצפנה מקצה לקצה, בכל טלפון שמחובר לחשבון הזה. תמונות וטקסטים ארוכים מאוד נשארים בטלפון הזה. הסנכרון פועל כשהאפליקציה פתוחה ולא נעולה.';
+
+  @override
+  String syncClipsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count קטעים סונכרנו',
+      one: 'קטע אחד סונכרן',
+      zero: 'אין עדיין מה לסנכרן',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncClipsUnavailable =>
+      'לא ניתן לפתוח את לוח ההעתקה כרגע. ננסה שוב.';
+
+  @override
+  String get syncSettingsTitle => 'סנכרון הגדרות המקלדת שלי';
+
+  @override
+  String get syncSettingsBody =>
+      'ערכות נושא, סרגל כלים, שפות ואפשרויות הקלדה, בהצפנה מקצה לקצה, בכל טלפון שמחובר לחשבון הזה. גדלים, מודל הקול וקובצי פריסה מותאמים נשארים בטלפון הזה. הסנכרון פועל כשהאפליקציה פתוחה ולא נעולה.';
+
+  @override
+  String get syncSettingsDone => 'ההגדרות מסונכרנות';
+
+  @override
+  String get syncSettingsUnavailable =>
+      'בהמתנה: טלפון אחר בחשבון הזה מריץ גרסה חדשה יותר של ZT Keyboard. עדכנו את האפליקציה כדי לסנכרן הגדרות.';
 }

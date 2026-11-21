@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import dev.sagron.zerotrustkeyboard.sync.KeyboardSettingsSync
 import dev.sagron.zerotrustkeyboard.sync.PersonalWords
+import dev.sagron.zerotrustkeyboard.sync.PinnedClips
 import helium314.keyboard.settings.SettingsActivity2
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -57,9 +59,35 @@ class MainActivity : FlutterFragmentActivity() {
                             true
                         }
                     }
+                    // The clips pinned in the keyboard's clipboard. On the main thread, where
+                    // the clipboard view also changes them.
+                    "pinnedClips" -> answer(result) { PinnedClips.all(applicationContext) }
+                    "applyPinnedClips" -> {
+                        val add = call.argument<List<String>>("add").orEmpty()
+                        val remove = call.argument<List<String>>("remove").orEmpty()
+                        answer(result) { PinnedClips.apply(applicationContext, add, remove) }
+                    }
+                    // The keyboard's own settings, without the ones that belong to this phone.
+                    "keyboardSettings" -> answer(result) { KeyboardSettingsSync.all(applicationContext) }
+                    "applyKeyboardSettings" -> {
+                        val set = call.argument<Map<String, Any?>>("set").orEmpty()
+                        val remove = call.argument<List<String>>("remove").orEmpty()
+                        answer(result) {
+                            KeyboardSettingsSync.apply(applicationContext, set, remove)
+                            true
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /** Runs [work] here and answers the Flutter side, with an error when it throws. */
+    private fun answer(result: MethodChannel.Result, work: () -> Any?) {
+        runCatching(work).fold(
+            onSuccess = { result.success(it) },
+            onFailure = { result.error("failed", it.message, null) },
+        )
     }
 
     /** Runs [work] off the main thread and answers the Flutter side on it. */

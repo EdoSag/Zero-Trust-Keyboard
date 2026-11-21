@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../sync/keyboard_settings.dart';
 import '../sync/personal_word.dart';
 
 /// Where the keyboard stands in the phone's settings.
@@ -69,6 +70,46 @@ class KeyboardHost {
       await _channel.invokeMethod<bool>('applyPersonalWords', {
         'add': [for (final w in add) w.toMap()],
         'remove': [for (final w in remove) w.toMap()],
+      }) ??
+      false;
+
+  /// The text clips pinned in the keyboard's clipboard, or null when the
+  /// clipboard cannot be opened now. Pictures and very long texts are left
+  /// out: they stay on this phone.
+  Future<List<String>?> pinnedClips() =>
+      _channel.invokeListMethod<String>('pinnedClips');
+
+  /// Pins [add] (adding the ones the clipboard does not hold) and unpins
+  /// [remove]. False when the clipboard cannot be opened.
+  Future<bool> applyPinnedClips({
+    required List<String> add,
+    required List<String> remove,
+  }) async =>
+      await _channel.invokeMethod<bool>('applyPinnedClips', {
+        'add': add,
+        'remove': remove,
+      }) ??
+      false;
+
+  /// The keyboard's own settings that can sync, or null when they cannot
+  /// be read now. Settings that belong to this phone (screen sizes, the
+  /// voice model, what was used last) are left out.
+  Future<KeyboardSettings?> keyboardSettings() async {
+    final map = await _channel.invokeMapMethod<Object?, Object?>(
+      'keyboardSettings',
+    );
+    return map == null ? null : KeyboardSettings.fromMap(map);
+  }
+
+  /// Writes [set] and puts [remove] back to their defaults. False when the
+  /// settings could not be changed.
+  Future<bool> applyKeyboardSettings({
+    required Map<String, Object?> set,
+    required List<String> remove,
+  }) async =>
+      await _channel.invokeMethod<bool>('applyKeyboardSettings', {
+        'set': set,
+        'remove': remove,
       }) ??
       false;
 }
