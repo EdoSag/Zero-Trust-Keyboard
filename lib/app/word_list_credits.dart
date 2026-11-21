@@ -34,5 +34,18 @@ void registerWordListCredits() {
       'countries. Used under the Unicode License v3. '
       'https://www.unicode.org/license.txt',
     );
+    yield const LicenseEntryWithLineBreaks(
+      ['Translation engine and language models (Mozilla)'],
+      'Translating on the phone uses Bergamot Translator '
+      '(@browsermt/bergamot-translator 0.4.9), the engine of Firefox '
+      'Translations, unchanged. Mozilla Public License 2.0. '
+      'https://github.com/browsermt/bergamot-translator\n'
+      '\n'
+      'The languages you download are Mozilla\'s Firefox Translations models. '
+      'Mozilla Public License 2.0. https://github.com/mozilla/translations\n'
+      '\n'
+      'The source code of both is at the addresses above. '
+      'https://mozilla.org/MPL/2.0/',
+    );
   });
 }

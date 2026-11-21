@@ -148,6 +148,27 @@ public class LatinIME extends InputMethodService implements
     private final dev.sagron.zerotrustkeyboard.voice.VoiceTyping mVoiceTyping =
             new dev.sagron.zerotrustkeyboard.voice.VoiceTyping(this);
     public dev.sagron.zerotrustkeyboard.voice.VoiceTyping getVoiceTyping() { return mVoiceTyping; }
+    private final dev.sagron.zerotrustkeyboard.translate.TranslateTyping mTranslateTyping =
+            new dev.sagron.zerotrustkeyboard.translate.TranslateTyping(this);
+    public dev.sagron.zerotrustkeyboard.translate.TranslateTyping getTranslateTyping() { return mTranslateTyping; }
+
+    /** ZT Keyboard: lets the word being typed stand as it is, so the text field holds everything written. */
+    public void ztFinishWord() {
+        mInputLogic.finishInput();
+    }
+
+    /** ZT Keyboard: where the keyboard takes the selection (or the cursor) to be: start and end. */
+    public int[] ztSelection() {
+        return new int[] { mInputLogic.mConnection.getExpectedSelectionStart(),
+                mInputLogic.mConnection.getExpectedSelectionEnd() };
+    }
+
+    /** ZT Keyboard: puts {@code text} in place of what is between two positions of the text field. */
+    public void ztReplaceText(final int start, final int end, final String text) {
+        mInputLogic.finishInput();
+        mInputLogic.mConnection.setSelection(start, end);
+        onTextInput(text);
+    }
     private final SubtypeState mSubtypeState = new SubtypeState((InputMethodSubtype subtype) -> { switchToSubtype(subtype); return Unit.INSTANCE; });
     private final StatsUtilsManager mStatsUtilsManager;
     // Working variable for {@link #startShowingInputView()} and
@@ -709,6 +730,8 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onDestroy() {
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
+        dev.sagron.zerotrustkeyboard.translate.TranslateEngine.INSTANCE.stop();
         dev.sagron.zerotrustkeyboard.voice.VoiceEngine.INSTANCE.release();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
@@ -1037,6 +1060,7 @@ public class LatinIME extends InputMethodService implements
     public void onWindowHidden() {
         super.onWindowHidden();
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
         Log.i(TAG, "onWindowHidden");
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
@@ -1059,6 +1083,7 @@ public class LatinIME extends InputMethodService implements
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
     }
@@ -1435,6 +1460,7 @@ public class LatinIME extends InputMethodService implements
     // This method is public for testability of LatinIME, but also in the future it should
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
+        mTranslateTyping.onOtherInput();
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
             // ZT Keyboard's own voice typing, on the device (HeliBoard switched to another keyboard here).
             mVoiceTyping.onVoiceKey();
@@ -1449,6 +1475,7 @@ public class LatinIME extends InputMethodService implements
 
     public void onTextInput(@Nullable String rawText) {
         if (rawText == null) return;
+        mTranslateTyping.onOtherInput();
         // TODO: have the keyboard pass the correct key code when we need it.
         Event event = Event.createSoftwareTextEvent(rawText, KeyCode.MULTIPLE_CODE_POINTS, null);
         InputTransaction completeInputTransaction = mInputLogic.onTextInput(mSettings.getCurrent(),
@@ -1459,6 +1486,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     public void onStartBatchInput() {
+        mTranslateTyping.onOtherInput();
         mInputLogic.onStartBatchInput(mSettings.getCurrent(), mKeyboardSwitcher, mHandler);
         mGestureConsumer.onGestureStarted(mRichImm.getCurrentSubtypeLocale(), mKeyboardSwitcher.getKeyboard());
     }

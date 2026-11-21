@@ -81,6 +81,21 @@ every download against the published list. A model whose name ends in a language
 `.he.bin`, is tuned for that language and is used whenever the keyboard is in it: for Hebrew
 that is the ivrit.ai model.
 
+Translating (phase K5) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/translate/`.
+The Translate key in the toolbar replaces what is written in the text field (or the selected
+part) with its translation, between the two languages chosen in Settings > Translate, and
+offers Undo. Hebrew and English are told apart by the letters; two languages with the same
+letters follow the language the keyboard is in.
+
+The engine is the one ZT Browser uses: Firefox's Bergamot (MPL-2.0, in
+`android/app/src/full/assets/translate`), run in a hidden WebView whose every request is
+answered by the keyboard itself from its own files, so it has no way to the network and the
+text never leaves the phone. The language models are Mozilla's Firefox Translations models,
+downloaded per language in Settings > Translate from ZT Browser's `translation-models`
+release. The list there is signed (Ed25519); the keyboard checks the signature and then each
+file's size and sha256 before using it. The Offline edition has no Translate key: it cannot
+download a language.
+
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
