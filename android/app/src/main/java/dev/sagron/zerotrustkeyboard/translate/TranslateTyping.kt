@@ -140,6 +140,13 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
                 toast(R.string.zt_translate_failed)
                 return@translate
             }
+            // The text may have changed without the keyboard typing it (cut or paste from the
+            // app's own menu, a hardware keyboard): then the translation no longer belongs there.
+            if (!holds(current.start, current.original)) {
+                close()
+                toast(R.string.zt_translate_text_changed)
+                return@translate
+            }
             val translated = TranslateText.join(pieces, out)
             // Typing the translation is itself input; it must not close the bar.
             current.translated = translated
@@ -187,6 +194,28 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         }
     }
 
+    /** True when the text field still has [expected] at [start], so it is safe to replace it. */
+    private fun holds(start: Int, expected: String): Boolean {
+        try {
+            val connection = ime.currentInputConnection ?: return false
+            val extracted = connection.getExtractedText(ExtractedTextRequest().apply { hintMaxChars = 100_000 }, 0)
+            val whole = extracted?.text?.toString()
+            if (extracted != null && whole != null) {
+                return TranslateText.holds(whole, maxOf(extracted.startOffset, 0), start, expected)
+            }
+            // No whole text from this app: read around the cursor instead.
+            val cursor = connection.getTextBeforeCursor(100_000, 0)?.toString() ?: return false
+            val after = connection.getTextAfterCursor(100_000, 0)?.toString() ?: return false
+            val selected = connection.getSelectedText(0)?.toString().orEmpty()
+            val selection = ime.ztSelection()
+            val offset = minOf(selection[0], selection[1]) - cursor.length
+            return offset >= 0 && TranslateText.holds(cursor + selected + after, offset, start, expected)
+        } catch (e: Exception) {
+            Log.w(TAG, "could not read the text field", e)
+            return false
+        }
+    }
+
     // TranslateBarView.Listener
     override fun onTranslateCancel() = close()
 
@@ -196,6 +225,12 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         val current = job
         val translated = current?.translated
         if (state == State.DONE && current != null && translated != null) {
+            if (!holds(current.start, translated)) {
+                // Edited since, in a way the keyboard did not see: leave it as it is now.
+                close()
+                toast(R.string.zt_translate_text_changed)
+                return
+            }
             typing = true
             try {
                 ime.ztReplaceText(current.start, current.start + translated.length, current.original)
