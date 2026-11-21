@@ -4,11 +4,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zero_trust_core/zero_trust_core.dart';
 
 import '../app/auth_providers.dart';
+import '../app/email_links.dart';
 import '../l10n/l10n.dart';
 
 /// The optional Zero-Trust account, opened from the home page.
 ///
-/// Signed out: sign in or create an account. Signed in but locked (cold
+/// Signed out: sign in or create an account. After a password-reset link
+/// from an email: choose a new password. Signed in but locked (cold
 /// start, auto-lock): unlock with the account password or biometrics. A new
 /// recovery key is always shown, and confirmed, before the vault opens.
 /// Unlocked: the shared Zero-Trust settings.
@@ -69,6 +71,13 @@ class _AccountPageState extends ConsumerState<AccountPage>
         .unlock(result.dek, legacyDek: result.legacyDek);
   }
 
+  void _forgotPassword() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) =>
+          ZtForgotPasswordScreen(redirectTo: EmailLinks.passwordReset),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     ref.listen(currentUserProvider, (_, user) {
@@ -91,9 +100,24 @@ class _AccountPageState extends ConsumerState<AccountPage>
       );
     }
 
+    if (ref.watch(passwordRecoveryProvider)) {
+      return ZtResetPasswordScreen(
+        onUnlocked: (UnlockResult result) {
+          ref.read(passwordRecoveryProvider.notifier).done();
+          _onUnlocked(result);
+        },
+      );
+    }
+
     final user = ref.watch(currentUserProvider);
     if (user == null || _signingIn) {
-      return _WithClose(child: ZtSignInScreen(onUnlocked: _onUnlocked));
+      return _WithClose(
+        child: ZtSignInScreen(
+          emailRedirectTo: EmailLinks.confirmed,
+          onUnlocked: _onUnlocked,
+          onForgotPassword: _forgotPassword,
+        ),
+      );
     }
 
     if (ref.watch(vaultControllerProvider) is VaultLocked) {
@@ -102,6 +126,7 @@ class _AccountPageState extends ConsumerState<AccountPage>
           email: user.email,
           onUnlocked: _onUnlocked,
           onSignOut: () => ref.read(accountServiceProvider).signOut(),
+          onForgotPassword: _forgotPassword,
         ),
       );
     }

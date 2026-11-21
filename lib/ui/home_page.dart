@@ -60,9 +60,22 @@ class _HomePageState extends ConsumerState<HomePage>
     if (mounted && status != _status) setState(() => _status = status);
   }
 
-  void _openAccount() => Navigator.of(
-    context,
-  ).push(MaterialPageRoute<void>(builder: (_) => const AccountPage()));
+  static const _accountRoute = 'account';
+  bool _accountOpen = false;
+
+  Future<void> _openAccount() async {
+    if (_accountOpen) return;
+    _accountOpen = true;
+    await Navigator.of(
+      context,
+    ).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: _accountRoute),
+        builder: (_) => const AccountPage(),
+      ),
+    );
+    _accountOpen = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +84,17 @@ class _HomePageState extends ConsumerState<HomePage>
       if (next is VaultLocked) {
         Navigator.of(context).popUntil((Route<dynamic> r) => r.isFirst);
       }
+    });
+
+    // A password-reset link from an email opened the app: the new password
+    // is chosen on the account page.
+    ref.listen(passwordRecoveryProvider, (_, bool recovering) {
+      if (!recovering) return;
+      // Above the account page there may be the Forgot password screen.
+      Navigator.of(context).popUntil(
+        (Route<dynamic> r) => r.isFirst || (_accountOpen && r.settings.name == _accountRoute),
+      );
+      _openAccount();
     });
 
     final l = context.l10n;

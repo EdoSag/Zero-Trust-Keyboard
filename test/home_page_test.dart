@@ -39,6 +39,8 @@ Widget app(FakeHost host, {Locale locale = ZtLanguages.english}) {
       keyboardHostProvider.overrideWithValue(host),
       // No account: the keyboard's normal state.
       currentUserProvider.overrideWithValue(null),
+      // No Supabase in tests: no auth events either.
+      authStateChangesProvider.overrideWith((ref) => const Stream.empty()),
     ],
     child: MaterialApp(
       // The suite's real theme: its full-width buttons break rows that a
