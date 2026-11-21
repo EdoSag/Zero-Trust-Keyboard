@@ -86,6 +86,18 @@ object DictionaryFactory {
         locale: Locale
     ): Dictionary? {
         if (!file.isFile) return null
+        return try {
+            readDictionary(file, locale)
+        } catch (e: UnsatisfiedLinkError) {
+            // Without the native library no dictionary can be read. The bundled emoji dictionary is
+            // opened while the keyboard starts, so this must not take the keyboard down with it.
+            // The file itself is fine and is kept.
+            Log.w("DictionaryFactory", "native library missing, cannot read ${file.name}")
+            null
+        }
+    }
+
+    private fun readDictionary(file: File, locale: Locale): Dictionary? {
         val header = DictionaryInfoUtils.getDictionaryFileHeaderOrNull(file)
         if (header == null) {
             killDictionary(file)
