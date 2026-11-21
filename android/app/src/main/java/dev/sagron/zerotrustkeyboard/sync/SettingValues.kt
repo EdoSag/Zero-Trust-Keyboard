@@ -17,6 +17,8 @@ object SettingValues {
         "dont_show_missing_dict_dialog", "version_code", "lib_checksum", "emoji_max_sdk", "show_setup_wizard_icon",
         // The voice model is a file downloaded on this phone, and its speed is this phone's.
         "zt_voice_model", "zt_voice_last_timing",
+        // Which release's dictionaries are unpacked on this phone.
+        "zt_bundled_dictionaries_version",
     )
 
     /** The same, for settings whose names continue (per orientation, per app, per layout). */

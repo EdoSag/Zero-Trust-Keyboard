@@ -16,6 +16,7 @@ class SettingValuesTest {
         assertFalse(SettingValues.syncs("zt_voice_model"))
         assertFalse(SettingValues.syncs("selected_subtype"))
         assertFalse(SettingValues.syncs("version_code"))
+        assertFalse(SettingValues.syncs("zt_bundled_dictionaries_version"))
         assertFalse(SettingValues.syncs("keyboard_height_scale_portrait"))
         assertFalse(SettingValues.syncs("floating_pos_x_landscape"))
         assertFalse(SettingValues.syncs("one_handed_mode_enabled_p_true"))
