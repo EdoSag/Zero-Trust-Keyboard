@@ -639,6 +639,37 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     }
 
     /**
+     * Every entry of the dictionary, or null when it could not be read within the time given
+     * (not loaded, or busy). Unlike {@link #getWordPropertiesForSyncing()}, a dictionary that
+     * could not be read never looks like an empty one: the account's sync would take that for
+     * "the user's words are gone".
+     */
+    @Nullable
+    public WordProperty[] getAllWordPropertiesOrNull(final long timeoutMillis) {
+        reloadDictionaryIfRequired();
+        final AsyncResultHolder<WordProperty[]> result = new AsyncResultHolder<>("AllWordProperties");
+        asyncExecuteTaskWithLock(mLock.readLock(), () -> {
+            final BinaryDictionary binaryDictionary = getBinaryDictionary();
+            if (binaryDictionary == null) {
+                result.set(null);
+                return;
+            }
+            final ArrayList<WordProperty> wordPropertyList = new ArrayList<>();
+            int token = 0;
+            do {
+                final BinaryDictionary.GetNextWordPropertyResult next = binaryDictionary.getNextWordProperty(token);
+                if (next.mWordProperty == null) {
+                    break;
+                }
+                wordPropertyList.add(next.mWordProperty);
+                token = next.mNextToken;
+            } while (token != 0);
+            result.set(wordPropertyList.toArray(new WordProperty[0]));
+        });
+        return result.get(null, timeoutMillis);
+    }
+
+    /**
      * Returns dictionary content required for syncing.
      */
     public WordProperty[] getWordPropertiesForSyncing() {

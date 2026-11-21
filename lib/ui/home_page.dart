@@ -8,7 +8,7 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 import '../app/auth_providers.dart';
 import '../app/keyboard_config.dart';
 import '../app/keyboard_host.dart';
-import '../sync/words_sync.dart';
+import '../sync/item_sync.dart';
 import '../l10n/l10n.dart';
 import 'account_page.dart';
 
@@ -184,6 +184,9 @@ class _HomePageState extends ConsumerState<HomePage>
               onTap: _openAccount,
             ),
           if (user != null && !locked) const _SyncWordsTile(),
+          if (user != null && !locked) const _SyncClipsTile(),
+          if (user != null && !locked) const _SyncSettingsTile(),
+          if (user != null && !locked) const _SyncLearnedTile(),
           _Header(l.appHeader),
           const _LanguageTile(),
           const _ThemeTile(),
@@ -496,27 +499,126 @@ class _SyncWordsTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
-    final enabled = ref.watch(wordsSyncEnabledProvider).value ?? false;
-    final status = ref.watch(wordsSyncProvider);
+    return _SyncTile(
+      key: const Key('sync-words'),
+      icon: Icons.sync_lock_outlined,
+      title: l.syncWordsTitle,
+      body: l.syncWordsBody,
+      unavailable: l.syncWordsKeyboardOff,
+      count: l.syncWordsCount,
+      enabled: ref.watch(wordsSyncEnabledProvider).value ?? false,
+      status: ref.watch(wordsSyncProvider),
+      onChanged: (on) => ref.read(wordsSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+/// The switch for syncing the clips pinned in the keyboard's clipboard.
+class _SyncClipsTile extends ConsumerWidget {
+  const _SyncClipsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return _SyncTile(
+      key: const Key('sync-clips'),
+      icon: Icons.push_pin_outlined,
+      title: l.syncClipsTitle,
+      body: l.syncClipsBody,
+      unavailable: l.syncClipsUnavailable,
+      count: l.syncClipsCount,
+      enabled: ref.watch(clipsSyncEnabledProvider).value ?? false,
+      status: ref.watch(clipsSyncProvider),
+      onChanged: (on) => ref.read(clipsSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+/// The switch for syncing the keyboard's own settings.
+class _SyncSettingsTile extends ConsumerWidget {
+  const _SyncSettingsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return _SyncTile(
+      key: const Key('sync-settings'),
+      icon: Icons.tune,
+      title: l.syncSettingsTitle,
+      body: l.syncSettingsBody,
+      unavailable: l.syncSettingsUnavailable,
+      count: (_) => l.syncSettingsDone,
+      enabled: ref.watch(settingsSyncEnabledProvider).value ?? false,
+      status: ref.watch(settingsSyncProvider),
+      onChanged: (on) =>
+          ref.read(settingsSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+/// The switch for syncing the words the keyboard learned from typing.
+class _SyncLearnedTile extends ConsumerWidget {
+  const _SyncLearnedTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return _SyncTile(
+      key: const Key('sync-learned'),
+      icon: Icons.psychology_alt_outlined,
+      title: l.syncLearnedTitle,
+      body: l.syncLearnedBody,
+      unavailable: l.syncLearnedUnavailable,
+      count: l.syncLearnedCount,
+      enabled: ref.watch(learnedSyncEnabledProvider).value ?? false,
+      status: ref.watch(learnedSyncProvider),
+      onChanged: (on) => ref.read(learnedSyncEnabledProvider.notifier).set(on),
+    );
+  }
+}
+
+class _SyncTile extends StatelessWidget {
+  const _SyncTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.unavailable,
+    required this.count,
+    required this.enabled,
+    required this.status,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final String unavailable;
+  final String Function(int) count;
+  final bool enabled;
+  final ItemSyncStatus status;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
     final String note;
     if (!enabled) {
-      note = l.syncWordsBody;
-    } else if (status.keyboardOff) {
-      note = l.syncWordsKeyboardOff;
+      note = body;
+    } else if (status.unavailable) {
+      note = unavailable;
     } else if (status.failed) {
-      note = l.syncWordsFailed;
-    } else if (status.synced case final int count) {
-      note = l.syncWordsCount(count);
+      note = context.l10n.syncWordsFailed;
+    } else if (status.synced case final int synced) {
+      note = count(synced);
     } else {
-      note = l.syncWordsBody;
+      note = body;
     }
     return SwitchListTile(
-      key: const Key('sync-words'),
-      secondary: const Icon(Icons.sync_lock_outlined),
-      title: Text(l.syncWordsTitle),
+      secondary: Icon(icon),
+      title: Text(title),
       subtitle: Text(note),
       value: enabled,
-      onChanged: (on) => ref.read(wordsSyncEnabledProvider.notifier).set(on),
+      onChanged: onChanged,
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:zero_trust_core/zero_trust_core.dart';
 
+import 'reconcile.dart';
+
 /// One entry of the personal dictionary: a word the user added, with an
 /// optional shortcut that types it and an optional language.
 class PersonalWord {
@@ -40,19 +42,11 @@ class PersonalWord {
   };
 }
 
-/// A [PersonalWord] as the account keeps it. The id is random: ids are not
-/// encrypted, so they must say nothing about the word.
-class SyncedWord {
-  const SyncedWord({required this.id, required this.word});
-
-  final String id;
-  final PersonalWord word;
-}
-
-final syncedWordsCollection = ZtCollection<SyncedWord>(
+/// The personal dictionary as the account keeps it.
+final syncedWordsCollection = ZtCollection<Synced<PersonalWord>>(
   kind: 'word',
   idOf: (w) => w.id,
   fromJson: (id, json, _) =>
-      SyncedWord(id: id, word: PersonalWord.fromMap(json)),
-  toJson: (w) => w.word.toMap(),
+      Synced(id: id, value: PersonalWord.fromMap(json)),
+  toJson: (w) => w.value.toMap(),
 );
