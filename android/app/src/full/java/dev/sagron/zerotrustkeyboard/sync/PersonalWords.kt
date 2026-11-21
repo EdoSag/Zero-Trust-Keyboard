@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package dev.sagron.zerotrustkeyboard.sync
 
+import android.content.ContentValues
 import android.content.Context
 import android.provider.UserDictionary.Words
-import java.util.Locale
 
 /**
  * The personal dictionary (words and shortcuts the user added), read and changed for the
@@ -17,12 +17,17 @@ object PersonalWords {
     private const val WEIGHT = "weight"
     private const val DEFAULT_WEIGHT = 250
 
-    /** Every entry, as maps for the Flutter side. An empty [SHORTCUT] or [LOCALE] means none. */
-    fun all(context: Context): List<Map<String, Any>> {
+    /**
+     * Every entry, as maps for the Flutter side. An empty [SHORTCUT] or [LOCALE] means none.
+     * Null when the dictionary could not be read: that must never look like an empty
+     * dictionary, or the sync would remove every word from the account.
+     */
+    fun all(context: Context): List<Map<String, Any>>? {
         val entries = ArrayList<Map<String, Any>>()
-        context.contentResolver.query(
+        val cursor = context.contentResolver.query(
             Words.CONTENT_URI, arrayOf(Words.WORD, Words.SHORTCUT, Words.LOCALE, Words.FREQUENCY), null, null, null
-        )?.use { cursor ->
+        ) ?: return null
+        cursor.use {
             while (cursor.moveToNext()) {
                 val word = cursor.getString(0)
                 if (word.isNullOrEmpty()) continue
@@ -53,10 +58,15 @@ object PersonalWords {
             val locale = (entry[LOCALE] as? String).orEmpty()
             if (exists(context, word, shortcut, locale)) continue
             val weight = ((entry[WEIGHT] as? Number)?.toInt() ?: DEFAULT_WEIGHT).coerceIn(0, 255)
-            Words.addWord(
-                context, word, weight, shortcut.ifEmpty { null },
-                if (locale.isEmpty()) null else Locale.forLanguageTag(locale.replace('_', '-')),
-            )
+            // Written as Words.addWord does, but with the language exactly as it was read:
+            // a text such as "sr__#Latn" does not survive a round trip through Locale.
+            val values = ContentValues(5)
+            values.put(Words.WORD, word)
+            values.put(Words.FREQUENCY, weight)
+            values.put(Words.LOCALE, locale.ifEmpty { null })
+            values.put(Words.APP_ID, 0)
+            values.put(Words.SHORTCUT, shortcut.ifEmpty { null })
+            context.contentResolver.insert(Words.CONTENT_URI, values)
         }
     }
 
