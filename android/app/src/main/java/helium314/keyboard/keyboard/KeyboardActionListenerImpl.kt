@@ -124,6 +124,11 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 }
                 return
             }
+            KeyCode.TRANSLATE -> {
+                // ZT Keyboard: on-device translation of the text in the field.
+                if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onTranslateKey()
+                return
+            }
             KeyCode.BACKGROUND_GATHERING_TEMP_OFF -> {
                 GestureDataGatheringSettings.tempDisableBackgroundGathering(latinIME.prefs())
                 BackgroundGatheringCache.clear()

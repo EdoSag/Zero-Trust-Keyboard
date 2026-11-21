@@ -8,6 +8,7 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 
 import 'app/email_links.dart';
 import 'app/keyboard_config.dart';
+import 'app/word_list_credits.dart';
 import 'l10n/l10n.dart';
 import 'ui/home_page.dart';
 
@@ -16,6 +17,7 @@ import 'ui/home_page.dart';
 /// account and without the network.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerWordListCredits();
   await dotenv.load(fileName: '.env');
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
