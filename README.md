@@ -11,6 +11,9 @@ Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-d
 typing, on-device translation, and optional end-to-end encrypted sync of your personal
 dictionary through your Zero-Trust account.
 
+The Hebrew dictionary (94,799 words) is built from the Android Open Source Project's Hebrew
+word list, see [dictionaries/README.md](dictionaries/README.md).
+
 ## Two editions
 
 | | ZT Keyboard | ZT Keyboard Offline |
