@@ -16,6 +16,18 @@ class VoiceModelsTest {
         assertFalse(VoiceModels.isModelHeader(ByteArray(0), 0))
     }
 
+    @Test fun theLastDictationTimesAreReadBack() {
+        val timing = VoiceModels.parseTiming("5200 3100 9400 ggml-my model.he.bin")!!
+        assertEquals(5200L, timing.speechMillis)
+        assertEquals(3100L, timing.loadMillis)
+        assertEquals(9400L, timing.workMillis)
+        assertEquals("ggml-my model.he.bin", timing.model)
+        assertEquals(null, VoiceModels.parseTiming(null))
+        assertEquals(null, VoiceModels.parseTiming(""))
+        assertEquals(null, VoiceModels.parseTiming("5200 x 9400 model.bin"))
+        assertEquals(null, VoiceModels.parseTiming("5200 3100 9400"))
+    }
+
     @Test fun labelsAreShortModelNames() {
         assertEquals("small-q5_1", VoiceModels.label("ggml-small-q5_1.bin"))
         assertEquals("large-v3-turbo-q5_0", VoiceModels.label("ggml-large-v3-turbo-q5_0.bin"))

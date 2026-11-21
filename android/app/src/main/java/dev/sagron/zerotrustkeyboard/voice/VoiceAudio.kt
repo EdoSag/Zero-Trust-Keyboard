@@ -30,6 +30,35 @@ object VoiceAudio {
         else -> code
     }
 
+    /**
+     * How much of Whisper's 30 second window to work on for [sampleCount] samples of speech,
+     * in fiftieths of a second (Whisper's unit), or 0 for the whole window. A short sentence
+     * fills a small part of the window, and the rest costs time for nothing. Two seconds are
+     * added, because cutting right behind the last word makes Whisper repeat itself.
+     */
+    fun audioContext(sampleCount: Int): Int {
+        val needed = (sampleCount.toLong() * 50 + SAMPLE_RATE - 1) / SAMPLE_RATE + 100
+        if (needed >= FULL_AUDIO_CONTEXT - 100) return 0
+        // In steps, so that the engine's memory is not laid out anew for every length.
+        return ((maxOf(needed, 300L) + 49) / 50 * 50).toInt()
+    }
+
+    private const val FULL_AUDIO_CONTEXT = 1500
+
+    /**
+     * How many threads to work with on a phone whose cores reach the top speeds [maxSpeeds]
+     * (any unit, 0 for unknown). The slow cores of a phone hold the fast ones back, so only
+     * the fast ones are counted: every core quicker than the slowest. Between 2 and 6.
+     */
+    fun threads(maxSpeeds: List<Long>): Int {
+        val known = maxSpeeds.filter { it > 0 }
+        val slowest = known.minOrNull()
+        val fast = if (slowest == null) 0 else known.count { it > slowest }
+        // All cores alike, or nothing known: about half of them are fast on most phones.
+        val count = if (fast == 0) maxSpeeds.size / 2 else fast
+        return count.coerceIn(2, 6)
+    }
+
     private val NOISE_TAG = Regex("""\[[^\]]*]|\([^)]*\)|♪+""")
     private val SPACES = Regex("""\s+""")
 

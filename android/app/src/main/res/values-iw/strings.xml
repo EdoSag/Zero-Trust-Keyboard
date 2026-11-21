@@ -559,6 +559,10 @@
     <string name="zt_voice_listening">"מקשיב…"</string>
     <string name="zt_voice_listening_time">"מקשיב… %1$d:%2$02d"</string>
     <string name="zt_voice_working">"כותב…"</string>
+    <string name="zt_voice_working_time">"כותב… %1$d:%2$02d"</string>
+    <string name="zt_voice_last_time">"בפעם האחרונה: %1$s שניות של דיבור נכתבו ב-%2$s שניות עם %3$s."</string>
+    <string name="zt_voice_last_time_load">"פתיחת המודל לקחה עוד %1$s שניות. הוא נשאר פתוח כמה דקות."</string>
+    <string name="zt_voice_speed_hint">"מודל קטן יותר כותב מהר יותר ועושה יותר טעויות."</string>
     <string name="zt_voice_done">"סיום"</string>
     <string name="zt_voice_cancel">"ביטול"</string>
     <string name="zt_voice_needs_model">"יש להוסיף מודל דיבור כדי להשתמש בהקלדה קולית"</string>

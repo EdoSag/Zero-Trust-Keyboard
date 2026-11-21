@@ -33,6 +33,42 @@ class VoiceAudioTest {
         assertTrue(floats[3] < 1f && floats[3] > 0.999f)
     }
 
+    @Test fun shortSpeechUsesASmallPartOfTheWindow() {
+        val second = VoiceAudio.SAMPLE_RATE
+        // Three seconds of speech and two to spare: 250 fiftieths, never under 300.
+        assertEquals(300, VoiceAudio.audioContext(3 * second))
+        assertEquals(350, VoiceAudio.audioContext(5 * second))
+        assertEquals(600, VoiceAudio.audioContext(10 * second))
+        // Always enough for the speech and the two spare seconds.
+        for (tenths in 5..250) {
+            val samples = tenths * second / 10
+            val context = VoiceAudio.audioContext(samples)
+            assertTrue("$tenths", context >= tenths * 5 + 100)
+            assertTrue("$tenths", context < 1500)
+        }
+    }
+
+    @Test fun longSpeechUsesTheWholeWindow() {
+        val second = VoiceAudio.SAMPLE_RATE
+        assertEquals(0, VoiceAudio.audioContext(26 * second))
+        assertEquals(0, VoiceAudio.audioContext(30 * second))
+        assertEquals(0, VoiceAudio.audioContext(600 * second))
+    }
+
+    @Test fun threadsAreTheFastCores() {
+        // One very fast, five fast and two slow cores.
+        assertEquals(6, VoiceAudio.threads(listOf(1_900L, 1_900L, 2_600L, 2_600L, 2_600L, 2_600L, 2_600L, 3_100L)))
+        // Four slow and four fast.
+        assertEquals(4, VoiceAudio.threads(listOf(1_800L, 1_800L, 1_800L, 1_800L, 2_400L, 2_400L, 2_400L, 2_400L)))
+        // All alike, or unknown: half of them.
+        assertEquals(4, VoiceAudio.threads(List(8) { 2_000L }))
+        assertEquals(4, VoiceAudio.threads(List(8) { 0L }))
+        // Never under two, never over six.
+        assertEquals(2, VoiceAudio.threads(listOf(1_000L, 2_000L)))
+        assertEquals(2, VoiceAudio.threads(listOf(0L)))
+        assertEquals(6, VoiceAudio.threads(List(4) { 1_000L } + List(12) { 3_000L }))
+    }
+
     @Test fun loudnessOfSilenceAndOfATone() {
         assertEquals(0f, VoiceAudio.loudness(ShortArray(1600), 1600), 0f)
         assertEquals(0f, VoiceAudio.loudness(ShortArray(0), 0), 0f)

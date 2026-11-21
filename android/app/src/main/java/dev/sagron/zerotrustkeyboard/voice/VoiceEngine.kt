@@ -16,8 +16,14 @@ object VoiceEngine {
     private const val TAG = "VoiceEngine"
     private const val KEEP_LOADED_MILLIS = 3 * 60 * 1000L
 
-    /** Whisper's default (5). Slower than taking the first guess, and more accurate. */
-    private const val BEAM_SIZE = 5
+    /**
+     * Whisper takes the best guess at every step. Following five guesses at once (its
+     * default on a computer) is a little more accurate and far too slow on a phone.
+     */
+    private const val BEAM_SIZE = 1
+
+    /** How long the last dictation took, for the settings screen. No words are kept. */
+    class Timing(val model: String, val speechMillis: Long, val loadMillis: Long, val workMillis: Long)
 
     private val worker = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "VoiceEngine") }
     private val main = Handler(Looper.getMainLooper())
@@ -40,17 +46,18 @@ object VoiceEngine {
      * or null when the model could not be loaded or the work was cancelled.
      * Call from the main thread.
      */
-    fun transcribe(model: File, samples: FloatArray, language: String, onResult: (String?) -> Unit) {
+    fun transcribe(model: File, samples: FloatArray, language: String, onResult: (String?, Timing?) -> Unit) {
         main.removeCallbacks(unload)
         val request = ++requests
         worker.execute {
+            var timing: Timing? = null
             val text = try {
-                transcribeNow(request, model, samples, language)
+                transcribeNow(request, model, samples, language) { timing = it }
             } catch (t: Throwable) {
                 Log.w(TAG, "transcription failed", t)
                 null
             }
-            main.post { onResult(text) }
+            main.post { onResult(text, timing) }
             main.removeCallbacks(unload)
             main.postDelayed(unload, KEEP_LOADED_MILLIS)
         }
@@ -70,8 +77,11 @@ object VoiceEngine {
         worker.execute { close() }
     }
 
-    private fun transcribeNow(request: Int, model: File, samples: FloatArray, language: String): String? {
+    private fun transcribeNow(
+        request: Int, model: File, samples: FloatArray, language: String, onTiming: (Timing) -> Unit,
+    ): String? {
         if (!WhisperNative.available || request <= cancelledUpTo) return null
+        var loadMillis = 0L
         if (handle == 0L || loadedPath != model.path) {
             close()
             val started = System.currentTimeMillis()
@@ -79,7 +89,8 @@ object VoiceEngine {
             if (opened == 0L) return null
             synchronized(handleLock) { handle = opened }
             loadedPath = model.path
-            Log.i(TAG, "loaded ${model.name} in ${System.currentTimeMillis() - started} ms")
+            loadMillis = System.currentTimeMillis() - started
+            Log.i(TAG, "loaded ${model.name} in $loadMillis ms")
         }
         // Loading can take seconds: the request may have been cancelled meanwhile. From here
         // on a cancel reaches the engine itself.
@@ -90,13 +101,27 @@ object VoiceEngine {
         // A model for English only knows no other language.
         val code = if (WhisperNative.isMultilingual(handle)) language else "en"
         val started = System.currentTimeMillis()
-        val bytes = WhisperNative.transcribe(handle, samples, samples.size, code, null, threads(), BEAM_SIZE)
-        Log.i(TAG, "${samples.size / VoiceAudio.SAMPLE_RATE} s of speech in ${System.currentTimeMillis() - started} ms")
-        return if (request <= cancelledUpTo) null else bytes?.toString(Charsets.UTF_8)
+        val bytes = WhisperNative.transcribe(
+            handle, samples, samples.size, code, null, threads, BEAM_SIZE, VoiceAudio.audioContext(samples.size),
+        )
+        val workMillis = System.currentTimeMillis() - started
+        val speechMillis = samples.size * 1000L / VoiceAudio.SAMPLE_RATE
+        Log.i(TAG, "$speechMillis ms of speech in $workMillis ms on $threads threads")
+        if (request <= cancelledUpTo) return null
+        if (bytes != null) onTiming(Timing(model.name, speechMillis, loadMillis, workMillis))
+        return bytes?.toString(Charsets.UTF_8)
     }
 
-    /** The fast cores of a phone are about half of all its cores. */
-    private fun threads(): Int = (Runtime.getRuntime().availableProcessors() / 2).coerceIn(2, 6)
+    private val threads: Int by lazy {
+        val cores = Runtime.getRuntime().availableProcessors()
+        VoiceAudio.threads(List(cores) { core ->
+            try {
+                File("/sys/devices/system/cpu/cpu$core/cpufreq/cpuinfo_max_freq").readText().trim().toLong()
+            } catch (e: Exception) {
+                0L
+            }
+        })
+    }
 
     private fun close() {
         val old = synchronized(handleLock) {

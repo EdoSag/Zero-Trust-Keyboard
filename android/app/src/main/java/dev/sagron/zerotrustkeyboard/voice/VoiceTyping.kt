@@ -3,6 +3,9 @@ package dev.sagron.zerotrustkeyboard.voice
 
 import android.Manifest
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.view.View
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.latin.LatinIME
@@ -30,11 +33,26 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
     /** Raised whenever work is abandoned, so a late result is not typed. */
     private var session = 0
 
+    // While the words are worked out, the bar counts the seconds, so a long wait is not
+    // taken for a keyboard that hangs.
+    private val handler = Handler(Looper.getMainLooper())
+    private var workingSince = 0L
+    private val tick = object : Runnable {
+        override fun run() {
+            if (state != State.WORKING) return
+            bar?.showWorking(((SystemClock.elapsedRealtime() - workingSince) / 1000).toInt())
+            handler.postDelayed(this, 1000)
+        }
+    }
+
     /** Called when the keyboard's views are (re)created. */
     fun attach(bar: VoiceBarView?) {
         this.bar = bar
         bar?.listener = this
         if (state != State.IDLE) showBar()
+        if (state == State.WORKING) {
+            bar?.showWorking(((SystemClock.elapsedRealtime() - workingSince) / 1000).toInt())
+        }
     }
 
     /** The microphone key was pressed. */
@@ -54,6 +72,7 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
         recorder = null
         if (state == State.WORKING) VoiceEngine.cancel()
         state = State.IDLE
+        handler.removeCallbacks(tick)
         hideBar()
     }
 
@@ -95,11 +114,20 @@ class VoiceTyping(private val ime: LatinIME) : VoiceBarView.Listener, VoiceRecor
             return
         }
         state = State.WORKING
-        bar?.showWorking()
+        workingSince = SystemClock.elapsedRealtime()
+        handler.removeCallbacks(tick)
+        tick.run()
         val mine = ++session
-        VoiceEngine.transcribe(model, samples, language) { heard ->
+        VoiceEngine.transcribe(model, samples, language) { heard, timing ->
+            if (timing != null) {
+                ime.prefs().edit().putString(
+                    VoiceModels.PREF_LAST_TIMING,
+                    "${timing.speechMillis} ${timing.loadMillis} ${timing.workMillis} ${timing.model}",
+                ).apply()
+            }
             if (mine != session) return@transcribe
             state = State.IDLE
+            handler.removeCallbacks(tick)
             hideBar()
             if (heard == null) {
                 toast(R.string.zt_voice_failed)

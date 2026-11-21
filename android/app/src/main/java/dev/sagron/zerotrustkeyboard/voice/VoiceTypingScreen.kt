@@ -183,6 +183,21 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
                         if (copiedMegabytes < 0) picker.launch(MODEL_FILE_INTENT)
                     },
                 )
+                val last = remember(models) { VoiceModels.lastTiming(context) }
+                if (last != null) {
+                    var text = stringResource(
+                        R.string.zt_voice_last_time, seconds(last.speechMillis), seconds(last.workMillis),
+                        VoiceModels.label(last.model),
+                    )
+                    if (last.loadMillis >= 1000) {
+                        text += " " + stringResource(R.string.zt_voice_last_time_load, seconds(last.loadMillis))
+                    }
+                    Text(
+                        text + " " + stringResource(R.string.zt_voice_speed_hint),
+                        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 if (VoiceDownloads.available) {
                     PreferenceCategory(stringResource(R.string.zt_voice_download))
                     val running = download
@@ -286,3 +301,6 @@ private fun hasMicrophone(context: android.content.Context) =
 private val MODEL_FILE_INTENT: Intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
     .addCategory(Intent.CATEGORY_OPENABLE)
     .setType("*/*")
+
+/** Milliseconds as seconds with one decimal, in the reader's digits and decimal mark. */
+private fun seconds(millis: Long): String = String.format(Locale.getDefault(), "%.1f", millis / 1000.0)
