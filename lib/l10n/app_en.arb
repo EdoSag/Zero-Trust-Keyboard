@@ -23,5 +23,11 @@
   "accountLocked": "Locked. Tap to unlock.",
   "accountSettings": "Account, security and app settings",
   "appHeader": "This app",
-  "accountClose": "Back to the keyboard"
+  "accountClose": "Back to the keyboard",
+  "syncWordsTitle": "Sync my personal dictionary",
+  "syncWordsBody": "The words and shortcuts you added, end-to-end encrypted, on every phone signed in to this account. Syncs while this app is open and unlocked.",
+  "syncWordsCount": "{count, plural, =0{Nothing to sync yet} =1{1 entry synced} other{{count} entries synced}}",
+  "syncWordsKeyboardOff": "Turn on ZT Keyboard first. Android only shows the personal dictionary to a keyboard that is on.",
+  "syncWordsFailed": "Could not sync just now. It will try again.",
+  "@syncWordsCount": {"placeholders": {"count": {"type": "int"}}}
 }

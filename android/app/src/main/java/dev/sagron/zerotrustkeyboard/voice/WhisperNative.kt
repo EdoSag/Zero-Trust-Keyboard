@@ -25,10 +25,13 @@ internal object WhisperNative {
      * @param samples 16 kHz mono, -1..1
      * @param language a Whisper language code, or "auto"
      * @param prompt words the speaker is likely to say, or null
+     * @param beamSize guesses followed at once; 1 takes the best guess at every step
+     * @param audioContext how much of Whisper's 30 second window to work on, in fiftieths
+     *   of a second, or 0 for all of it
      * @return the text as UTF-8, or null when it failed or was cancelled
      */
     @JvmStatic external fun transcribe(
         handle: Long, samples: FloatArray, count: Int, language: String, prompt: String?,
-        threads: Int, beamSize: Int,
+        threads: Int, beamSize: Int, audioContext: Int,
     ): ByteArray?
 }

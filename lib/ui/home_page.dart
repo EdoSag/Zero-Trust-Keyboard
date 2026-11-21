@@ -8,6 +8,7 @@ import 'package:zero_trust_core/zero_trust_core.dart';
 import '../app/auth_providers.dart';
 import '../app/keyboard_config.dart';
 import '../app/keyboard_host.dart';
+import '../sync/words_sync.dart';
 import '../l10n/l10n.dart';
 import 'account_page.dart';
 
@@ -60,9 +61,22 @@ class _HomePageState extends ConsumerState<HomePage>
     if (mounted && status != _status) setState(() => _status = status);
   }
 
-  void _openAccount() => Navigator.of(
-    context,
-  ).push(MaterialPageRoute<void>(builder: (_) => const AccountPage()));
+  static const _accountRoute = 'account';
+  bool _accountOpen = false;
+
+  Future<void> _openAccount() async {
+    if (_accountOpen) return;
+    _accountOpen = true;
+    await Navigator.of(
+      context,
+    ).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: _accountRoute),
+        builder: (_) => const AccountPage(),
+      ),
+    );
+    _accountOpen = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +85,17 @@ class _HomePageState extends ConsumerState<HomePage>
       if (next is VaultLocked) {
         Navigator.of(context).popUntil((Route<dynamic> r) => r.isFirst);
       }
+    });
+
+    // A password-reset link from an email opened the app: the new password
+    // is chosen on the account page.
+    ref.listen(passwordRecoveryProvider, (_, bool recovering) {
+      if (!recovering) return;
+      // Above the account page there may be the Forgot password screen.
+      Navigator.of(context).popUntil(
+        (Route<dynamic> r) => r.isFirst || (_accountOpen && r.settings.name == _accountRoute),
+      );
+      _openAccount();
     });
 
     final l = context.l10n;
@@ -158,6 +183,7 @@ class _HomePageState extends ConsumerState<HomePage>
               trailing: const Icon(Icons.chevron_right),
               onTap: _openAccount,
             ),
+          if (user != null && !locked) const _SyncWordsTile(),
           _Header(l.appHeader),
           const _LanguageTile(),
           const _ThemeTile(),
@@ -458,6 +484,39 @@ class _ThemeTile extends ConsumerWidget {
           await ref.read(themeModeProvider.notifier).set(picked);
         }
       },
+    );
+  }
+}
+
+/// The switch for syncing the personal dictionary, shown while the account
+/// is unlocked. Off until the user turns it on.
+class _SyncWordsTile extends ConsumerWidget {
+  const _SyncWordsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final enabled = ref.watch(wordsSyncEnabledProvider).value ?? false;
+    final status = ref.watch(wordsSyncProvider);
+    final String note;
+    if (!enabled) {
+      note = l.syncWordsBody;
+    } else if (status.keyboardOff) {
+      note = l.syncWordsKeyboardOff;
+    } else if (status.failed) {
+      note = l.syncWordsFailed;
+    } else if (status.synced case final int count) {
+      note = l.syncWordsCount(count);
+    } else {
+      note = l.syncWordsBody;
+    }
+    return SwitchListTile(
+      key: const Key('sync-words'),
+      secondary: const Icon(Icons.sync_lock_outlined),
+      title: Text(l.syncWordsTitle),
+      subtitle: Text(note),
+      value: enabled,
+      onChanged: (on) => ref.read(wordsSyncEnabledProvider.notifier).set(on),
     );
   }
 }

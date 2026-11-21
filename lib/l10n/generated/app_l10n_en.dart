@@ -83,4 +83,30 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get accountClose => 'Back to the keyboard';
+
+  @override
+  String get syncWordsTitle => 'Sync my personal dictionary';
+
+  @override
+  String get syncWordsBody =>
+      'The words and shortcuts you added, end-to-end encrypted, on every phone signed in to this account. Syncs while this app is open and unlocked.';
+
+  @override
+  String syncWordsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries synced',
+      one: '1 entry synced',
+      zero: 'Nothing to sync yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncWordsKeyboardOff =>
+      'Turn on ZT Keyboard first. Android only shows the personal dictionary to a keyboard that is on.';
+
+  @override
+  String get syncWordsFailed => 'Could not sync just now. It will try again.';
 }

@@ -538,7 +538,7 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
                 sources.add(SwipeTyping.Source(dictionary, group.locale, weight, dictType != Dictionary.TYPE_MAIN))
             }
         }
-        for (result in SwipeTyping.decode(composedData.mInputPointers, keyboard, sources)) {
+        for (result in SwipeTyping.decode(composedData.mInputPointers, keyboard, sources, ngramContext)) {
             if (isBlacklisted(result.word)) continue
             if (result.possiblyOffensive && settingsValuesForSuggestion.mBlockPotentiallyOffensive) continue
             val info = SuggestedWordInfo(

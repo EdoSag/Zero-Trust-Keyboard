@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:zero_trust_core/zero_trust_core.dart';
 
+import 'app/email_links.dart';
 import 'app/keyboard_config.dart';
 import 'l10n/l10n.dart';
 import 'ui/home_page.dart';
@@ -18,6 +21,8 @@ Future<void> main() async {
     url: dotenv.env['SUPABASE_URL']!,
     publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+  // A password-reset link that opened the app.
+  unawaited(EmailLinks.listen());
   // English or Hebrew, as picked in the app, from the first frame.
   await ZtLanguageController.preload();
   runApp(

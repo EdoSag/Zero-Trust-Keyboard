@@ -240,6 +240,36 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Back to the keyboard'**
   String get accountClose;
+
+  /// No description provided for @syncWordsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync my personal dictionary'**
+  String get syncWordsTitle;
+
+  /// No description provided for @syncWordsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The words and shortcuts you added, end-to-end encrypted, on every phone signed in to this account. Syncs while this app is open and unlocked.'**
+  String get syncWordsBody;
+
+  /// No description provided for @syncWordsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing to sync yet} =1{1 entry synced} other{{count} entries synced}}'**
+  String syncWordsCount(int count);
+
+  /// No description provided for @syncWordsKeyboardOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on ZT Keyboard first. Android only shows the personal dictionary to a keyboard that is on.'**
+  String get syncWordsKeyboardOff;
+
+  /// No description provided for @syncWordsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sync just now. It will try again.'**
+  String get syncWordsFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
