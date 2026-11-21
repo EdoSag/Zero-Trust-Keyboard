@@ -16,6 +16,10 @@ Project's Hebrew word list, widened with the words people really use (from OpenS
 counts) that the Hspell speller accepts. Sources, licences and how it is built are in
 [dictionaries/README.md](dictionaries/README.md).
 
+Emoji search and emoji names work in Hebrew and English with nothing to download: type
+כלב or dog in the emoji search, or just in a message, and the emoji is offered. The words
+come from Unicode CLDR.
+
 Signed in, you can turn on **Sync my personal dictionary** in the ZT Keyboard app: the words and
 shortcuts you added are kept the same on every phone of the account, end-to-end encrypted. It is
 off until you turn it on, and it runs while the app is open and unlocked, because the keyboard

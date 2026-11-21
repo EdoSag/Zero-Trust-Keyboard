@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-/// Credits for the bundled Hebrew word list, shown on the Open source licences
-/// page. The list and how it is built are in /dictionaries of the source code.
+/// Credits for the bundled Hebrew word list and emoji words, shown on the Open source licences
+/// page. The lists and how they are built are in /dictionaries of the source code.
 void registerWordListCredits() {
   LicenseRegistry.addLicense(() async* {
     yield const LicenseEntryWithLineBreaks(
@@ -23,6 +23,16 @@ void registerWordListCredits() {
       '\n'
       'The combined list is shared under Creative Commons '
       'Attribution-ShareAlike 4.0 and the GNU Affero General Public License v3.',
+    );
+    yield const LicenseEntryWithLineBreaks(
+      ['Emoji names and search words (Unicode CLDR)'],
+      'Emoji search and emoji names in Hebrew and English are built from the '
+      'Unicode Common Locale Data Repository (CLDR) annotations.\n'
+      '\n'
+      'Copyright © 2004-2025 Unicode, Inc. Unicode and the Unicode Logo are '
+      'registered trademarks of Unicode, Inc. in the United States and other '
+      'countries. Used under the Unicode License v3. '
+      'https://www.unicode.org/license.txt',
     );
   });
 }

@@ -5,6 +5,8 @@
 | `he_zt_wordlist.combined.gz` | The "ZT Hebrew" list. Becomes `android/app/src/main/assets/dicts/main_he.dict` | CC BY-SA 4.0 and AGPL-3.0, see below |
 | `iw_wordlist.combined.gz` | The Android Hebrew list, one of the inputs. Android Open Source Project, LatinIME, `dictionaries/iw_wordlist.combined.gz` | Apache-2.0 |
 | `build_zt_hebrew.py` | Builds the first file from the inputs | AGPL-3.0 |
+| `emoji_he_wordlist.combined.gz`, `emoji_en_wordlist.combined.gz` | Emoji search words and emoji names. Become `android/app/src/main/assets/dicts/emoji_he.dict` and `emoji_en.dict` | Unicode License v3, see below |
+| `build_emoji_wordlist.py` | Builds the emoji lists from Unicode CLDR | AGPL-3.0 |
 
 ## The ZT Hebrew list
 
@@ -51,6 +53,41 @@ The list is built from CC BY-SA 4.0 counts and checked against AGPL-3.0 Hspell d
 it is shared under both: Creative Commons Attribution-ShareAlike 4.0 and the GNU Affero
 General Public License v3. The Android words in it remain available under Apache-2.0 in
 `iw_wordlist.combined.gz`. The app shows these credits under Open source licences.
+
+## The emoji lists
+
+Emoji search, emoji suggestions while typing and the emoji name shown on a long press all
+read an "emoji dictionary". HeliBoard leaves it to the user to download one; ZT Keyboard
+comes with Hebrew and English. A dictionary the user adds for a language still wins.
+
+Each list holds 1,914 emoji and about 3,900 search words, from the
+[Unicode CLDR](https://github.com/unicode-org/cldr) annotations, release 48
+(`common/annotations/<language>.xml` and `common/annotationsDerived/<language>.xml`).
+Copyright © 2004-2025 Unicode, Inc., [Unicode License v3](https://www.unicode.org/license.txt).
+Only emoji the keyboard can show (`android/app/src/main/assets/emoji`) are in, each in its
+neutral form.
+
+- A search word is a word of an emoji's name or of one of its keywords. It carries up to
+  18 emoji, best first: a word of the name beats a keyword, a handful of everyday
+  favourites win a tie, then a short name, then an early keyword.
+- An emoji carries its name.
+
+| Input | sha256 |
+|---|---|
+| `annotations/he.xml` | `aeaa82174a473a00ba1bd314e77f8f88d56281f04a7013a9a282c2c43e91a7e1` |
+| `annotationsDerived/he.xml` | `110013198799f8bdb5d7140bb04e07d9c382f30b9e9c9c09fd7342902a1c2318` |
+| `annotations/en.xml` | `8511aadd046fdba2f0ffe590266ced8bbf48175ad139b2675d85d7141057b235` |
+| `annotationsDerived/en.xml` | `d76bd041c8c9e7b00b716aff8b7d9dbf509877010e191d5efd068be2553e066e` |
+
+```sh
+python3 build_emoji_wordlist.py he annotations/he.xml annotationsDerived/he.xml ../android/app/src/main/assets/emoji emoji_he_wordlist.combined.gz
+python3 build_emoji_wordlist.py en annotations/en.xml annotationsDerived/en.xml ../android/app/src/main/assets/emoji emoji_en_wordlist.combined.gz
+```
+
+The same inputs always give the same files, sha256
+`fbb0e2d5cbf4e5d4113323f69b9ae87c3c5b1c691ff79038fb06b5df0439c7aa` (Hebrew) and
+`1109bfab2a2b576ddb9e3410fc107c9758351837e8abc99316e7d82993ded854` (English).
+`BundledEmojiDictionaryTest` builds both dictionaries again on every build and compares.
 
 ## How a dictionary file is built
 
