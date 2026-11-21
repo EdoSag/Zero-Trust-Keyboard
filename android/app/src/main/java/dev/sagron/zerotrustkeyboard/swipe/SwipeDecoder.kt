@@ -45,7 +45,7 @@ class SwipeDecoder {
     fun decode(
         xs: IntArray, ys: IntArray, count: Int, layout: SwipeLayout,
         lexicons: List<SwipeLexicon>, weights: FloatArray? = null, maxResults: Int = 18,
-        fitsContext: ((lexicon: Int, word: String) -> Float)? = null,
+        fitsContext: ((lexicon: Int, word: String, frequency: Int) -> Float)? = null,
     ): List<SwipeCandidate> {
         if (count < 2 || layout.size == 0) return emptyList()
         val kw = layout.keyWidth
@@ -104,7 +104,7 @@ class SwipeDecoder {
             val ends = (sq(inX[0] - polyX[0], inY[0] - polyY[0]) +
                 sq(inX[POINTS - 1] - polyX[m - 1], inY[POINTS - 1] - polyY[m - 1])) / (kw * kw)
             val word = lexicon.word(entry.id)
-            val context = fitsContext?.invoke(entry.lexicon, word)?.coerceIn(0f, 1f) ?: 0f
+            val context = fitsContext?.invoke(entry.lexicon, word, frequency)?.coerceIn(0f, 1f) ?: 0f
             val score = -(SHAPE_WEIGHT * entry.cost + LETTER_WEIGHT * letters + END_WEIGHT * ends) +
                 FREQUENCY_WEIGHT * frequency + LEXICON_WEIGHT * (weight - 1f) + CONTEXT_WEIGHT * context
             results.add(SwipeCandidate(word, score, frequency, entry.lexicon))

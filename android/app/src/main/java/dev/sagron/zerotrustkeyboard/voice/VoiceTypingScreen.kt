@@ -59,6 +59,7 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
     var microphone by remember { mutableStateOf(hasMicrophone(context)) }
     var askedBefore by remember { mutableStateOf(false) }
     var toDownload by remember { mutableStateOf<VoiceOffer?>(null) }
+    var lastTiming by remember { mutableStateOf(VoiceModels.lastTiming(context)) }
     val listState by VoiceDownloads.listState.collectAsState()
     val offers by VoiceDownloads.offers.collectAsState()
     val download by VoiceDownloads.progress.collectAsState()
@@ -78,6 +79,8 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
     // The permission can change in the system settings while this screen is in the back.
     LifecycleResumeEffect(Unit) {
         microphone = hasMicrophone(context)
+        // A dictation in another app, while this screen stayed open behind it.
+        lastTiming = VoiceModels.lastTiming(context)
         onPauseOrDispose { }
     }
     val askMicrophone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -183,7 +186,7 @@ fun VoiceTypingScreen(onClickBack: () -> Unit) {
                         if (copiedMegabytes < 0) picker.launch(MODEL_FILE_INTENT)
                     },
                 )
-                val last = remember(models) { VoiceModels.lastTiming(context) }
+                val last = lastTiming
                 if (last != null) {
                     var text = stringResource(
                         R.string.zt_voice_last_time, seconds(last.speechMillis), seconds(last.workMillis),
