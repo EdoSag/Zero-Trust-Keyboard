@@ -28,6 +28,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Links are handled by the app's own code (EmailLinks), not Flutter's router:
+                 the app has no route for them. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <!-- Password-reset emails: https://zerotrust.bz/auth/keyboard/#token_hash=…
+                 (see EmailLinks). Only the full edition has an account. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="zerotrust.bz" android:pathPrefix="/auth/keyboard/" />
+            </intent-filter>
         </activity>
     </application>
 
