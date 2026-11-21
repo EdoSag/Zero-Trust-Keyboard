@@ -569,6 +569,7 @@ public final class KeyboardSwitcher {
         mStripContainer = mCurrentInputView.findViewById(R.id.strip_container);
         mBackgroundGatheringIndicator = mCurrentInputView.findViewById(R.id.backgroundGatheringIndicator);
         mLatinIME.getVoiceTyping().attach(mCurrentInputView.findViewById(R.id.voice_bar));
+        mLatinIME.getTranslateTyping().attach(mCurrentInputView.findViewById(R.id.translate_bar));
 
         prefs.registerOnSharedPreferenceChangeListener(mSuggestionStripView);
         prefs.registerOnSharedPreferenceChangeListener(mClipboardHistoryView);

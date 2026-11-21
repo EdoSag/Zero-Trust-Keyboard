@@ -11,8 +11,14 @@ Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-d
 typing, on-device translation, and optional end-to-end encrypted sync of your personal
 dictionary through your Zero-Trust account.
 
-The Hebrew dictionary (94,799 words) is built from the Android Open Source Project's Hebrew
-word list, see [dictionaries/README.md](dictionaries/README.md).
+The Hebrew dictionary (181,813 words) is our own "ZT Hebrew" list: the Android Open Source
+Project's Hebrew word list, widened with the words people really use (from OpenSubtitles
+counts) that the Hspell speller accepts. Sources, licences and how it is built are in
+[dictionaries/README.md](dictionaries/README.md).
+
+Emoji search and emoji names work in Hebrew and English with nothing to download: type
+כלב or dog in the emoji search, or just in a message, and the emoji is offered. The words
+come from Unicode CLDR.
 
 Signed in, you can turn on **Sync my personal dictionary** in the ZT Keyboard app: the words and
 shortcuts you added are kept the same on every phone of the account, end-to-end encrypted. It is
@@ -74,6 +80,21 @@ workflow; `voice-models/sources.tsv` names them with a pinned sha256 each, and t
 every download against the published list. A model whose name ends in a language code, like
 `.he.bin`, is tuned for that language and is used whenever the keyboard is in it: for Hebrew
 that is the ivrit.ai model.
+
+Translating (phase K5) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/translate/`.
+The Translate key in the toolbar replaces what is written in the text field (or the selected
+part) with its translation, between the two languages chosen in Settings > Translate, and
+offers Undo. Hebrew and English are told apart by the letters; two languages with the same
+letters follow the language the keyboard is in.
+
+The engine is the one ZT Browser uses: Firefox's Bergamot (MPL-2.0, in
+`android/app/src/full/assets/translate`), run in a hidden WebView whose every request is
+answered by the keyboard itself from its own files, so it has no way to the network and the
+text never leaves the phone. The language models are Mozilla's Firefox Translations models,
+downloaded per language in Settings > Translate from ZT Browser's `translation-models`
+release. The list there is signed (Ed25519); the keyboard checks the signature and then each
+file's size and sha256 before using it. The Offline edition has no Translate key: it cannot
+download a language.
 
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
