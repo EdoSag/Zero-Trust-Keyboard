@@ -6,7 +6,7 @@ void registerWordListCredits() {
   LicenseRegistry.addLicense(() async* {
     yield const LicenseEntryWithLineBreaks(
       ['ZT Hebrew word list'],
-      'The Hebrew dictionary of ZT Keyboard is built from three sources.\n'
+      'The Hebrew dictionary of ZT Keyboard is built from four sources.\n'
       '\n'
       'Android Open Source Project, LatinIME Hebrew word list. '
       'Copyright The Android Open Source Project. Apache License 2.0.\n'
@@ -20,6 +20,11 @@ void registerWordListCredits() {
       'Attribution-ShareAlike 4.0. Changes: only the counts of words that '
       'Hspell accepts were used, turned into a 1 to 150 scale. '
       'https://github.com/hermitdave/FrequencyWords\n'
+      '\n'
+      'Hebrew Wikipedia, by its contributors, from the Wikimedia "wikipedia" '
+      'dataset (20231101.he). Creative Commons Attribution-ShareAlike 4.0. '
+      'Changes: only how often one word follows another was counted, for the '
+      'next-word suggestions; no text is included. https://he.wikipedia.org/\n'
       '\n'
       'The combined list is shared under Creative Commons '
       'Attribution-ShareAlike 4.0 and the GNU Affero General Public License v3.',
