@@ -15,8 +15,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api "repos/ggml-org/llama.cpp/releases?per_page=40" --jq '.[] | .tag_name + " " + .published_at' | sed -n '1,40p'
-          TAG=$(gh api "repos/ggml-org/llama.cpp/releases?per_page=40" --jq '[.[] | select(.published_at < "2026-11-01")][0].tag_name')
+          TAG=$(gh api --paginate "repos/ggml-org/llama.cpp/releases?per_page=100" --jq '.[] | select(.published_at < "2026-11-01") | .tag_name' | head -1)
+          echo "TAG $TAG"
           curl -sSfL -o llama.tar.gz "https://github.com/ggml-org/llama.cpp/archive/refs/tags/$TAG.tar.gz"
           echo "LLAMA TAG $TAG SHA256 $(sha256sum llama.tar.gz | cut -d' ' -f1)"
       - name: Qwen GGUF
