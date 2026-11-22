@@ -36,6 +36,9 @@ set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
 set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
 set(GGML_LLAMAFILE OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(llama)
+# llama.cpp calls posix_madvise, which Android has only from API 23; the Offline edition
+# starts at API 21. The header maps it to madvise there (see zt_android_compat.h).
+target_compile_options(llama PRIVATE "SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/zt_android_compat.h")
 
 add_library(zt_llm SHARED zt_llm_jni.cpp)
 target_link_libraries(zt_llm PRIVATE llama log)
