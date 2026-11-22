@@ -104,7 +104,9 @@ in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard r
 Branches: work happens on `Dev`; `main` holds releases. Every push to `main` builds both
 editions, signed, plus a Google Play bundle of the full edition, and publishes them as a
 GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
-keyboard's unit tests and the app's widget tests.
+keyboard's unit tests and the app's widget tests. Every build first runs the suite's release
+checks (`dart run zt_release_checks --app keyboard --database`): keys, sync and sign-in with
+fixed values, app setup, and the database rules.
 
 The Google Play listing (title, descriptions, icon and feature graphic, in English and Hebrew)
 is in `fastlane/metadata/android/`. Screenshots are added there by hand.
