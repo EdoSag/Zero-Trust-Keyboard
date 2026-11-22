@@ -73,7 +73,7 @@ private fun refreshBundledDictionaries(context: Context) {
     DictionaryInfoUtils.getCacheDirectories(context).forEach { directory ->
         directory.listFiles()?.forEach { if (!it.name.endsWith(USER_DICTIONARY_SUFFIX)) it.delete() }
     }
-    // A ZT release can add a toolbar key (Translate): saved toolbars learn about it, switched off.
+    // A ZT release can add a toolbar key (Translate, Insert from ZT): saved toolbars learn about it, switched off.
     upgradeToolbarPrefs(prefs)
     prefs.edit { putInt(PREF_ZT_BUNDLED_DICTIONARIES_VERSION, BuildConfig.VERSION_CODE) }
 }

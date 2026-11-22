@@ -129,6 +129,12 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onTranslateKey()
                 return
             }
+            KeyCode.ZT_INSERT -> {
+                // ZT Keyboard: pick a text in another Zero-Trust app and type it here.
+                if (!(Settings.getValues().mIsLocked))
+                    dev.sagron.zerotrustkeyboard.insert.InsertActivity.start(latinIME, latinIME.currentInputEditorInfo)
+                return
+            }
             KeyCode.BACKGROUND_GATHERING_TEMP_OFF -> {
                 GestureDataGatheringSettings.tempDisableBackgroundGathering(latinIME.prefs())
                 BackgroundGatheringCache.clear()

@@ -96,6 +96,7 @@ fun getCodeForToolbarKey(key: ToolbarKey) = Settings.getInstance().getCustomTool
     FLOATING -> KeyCode.TOGGLE_FLOATING_WINDOW
     BACKGROUND_GATHERING -> KeyCode.BACKGROUND_GATHERING
     TRANSLATE -> KeyCode.TRANSLATE
+    ZT_INSERT -> KeyCode.ZT_INSERT
 }
 
 fun getCodeForToolbarKeyLongClick(key: ToolbarKey) = Settings.getInstance().getCustomToolbarLongpressCode(key) ?: when (key) {
@@ -124,7 +125,9 @@ enum class ToolbarKey {
     INCOGNITO, AUTOCORRECT, CLEAR_CLIPBOARD, CLOSE_HISTORY, EMOJI, LEFT, RIGHT, UP, DOWN, WORD_LEFT, WORD_RIGHT,
     PAGE_UP, PAGE_DOWN, FULL_LEFT, FULL_RIGHT, PAGE_START, PAGE_END, BACKGROUND_GATHERING,
     /** ZT Keyboard: translate the text in the field, on the phone. */
-    TRANSLATE
+    TRANSLATE,
+    /** ZT Keyboard: type a text picked in another Zero-Trust app (a contact's number, a note line, a date). */
+    ZT_INSERT
 }
 
 enum class ToolbarMode {

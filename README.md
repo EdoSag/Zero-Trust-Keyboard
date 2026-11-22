@@ -96,6 +96,17 @@ release. The list there is signed (Ed25519); the keyboard checks the signature a
 file's size and sha256 before using it. The Offline edition has no Translate key: it cannot
 download a language.
 
+Inserts from other Zero-Trust apps (phase K6) are in
+`android/app/src/main/java/dev/sagron/zerotrustkeyboard/insert/`. The "Insert from ZT apps"
+toolbar key (off by default, switch it on in Settings > Toolbar) opens another Zero-Trust
+app's own pick screen with the intent action `bz.zerotrust.action.PICK_TEXT`. The user
+unlocks that app as usual, picks a value, and the app answers with only that text in the
+extra `bz.zerotrust.extra.TEXT`. The keyboard types it when it is back in the text field
+that asked, within two minutes, and never anywhere else. The keyboard never reads another
+app's data. Both sides check that the other app is signed with the same key
+(`PackageManager.checkSignatures`), so no other app can offer itself to the keyboard or ask
+a Zero-Trust app for a value. The key does nothing while the phone is locked.
+
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
