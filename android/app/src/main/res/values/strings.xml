@@ -1408,4 +1408,9 @@ New dictionary:
     <string name="zt_translate_needs_languages">Download the languages to translate first</string>
     <string name="zt_translate_failed">The translation failed, please try again</string>
     <string name="zt_translate_text_changed">The text changed, so it was not translated</string>
+    <!-- ZT Keyboard: one-time codes from text messages -->
+    <string name="zt_sms_codes">Suggest codes from text messages</string>
+    <string name="zt_sms_codes_summary">Offer a one-time code from a message that arrived in the last 10 minutes. The messages are read on this phone only, and nothing is kept.</string>
+    <string name="zt_sms_code_spoken">Type the code %s from a text message</string>
+    <string name="zt_sms_code_dismiss">Dismiss the code</string>
 </resources>

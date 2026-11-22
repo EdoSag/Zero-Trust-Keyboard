@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One-time codes from text messages (dev.sagron.zerotrustkeyboard.otp). Asked for only when
+    the user turns "Suggest codes from text messages" on; the messages are read on the phone
+    and nothing is kept or sent.
+    Added to every build except the Google Play bundle (-PztPlay): Play allows this
+    permission only for default SMS apps. See build.gradle.kts.
+    SPDX-License-Identifier: AGPL-3.0-only
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.READ_SMS" />
+</manifest>

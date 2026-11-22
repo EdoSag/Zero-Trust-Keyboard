@@ -641,4 +641,8 @@
     <string name="zt_translate_needs_languages">"קודם יש להוריד את השפות לתרגום"</string>
     <string name="zt_translate_failed">"התרגום נכשל, נסו שוב"</string>
     <string name="zt_translate_text_changed">"הטקסט השתנה, ולכן לא תורגם"</string>
+    <string name="zt_sms_codes">"הצעת קודים מהודעות SMS"</string>
+    <string name="zt_sms_codes_summary">"הצעת קוד חד־פעמי מהודעה שהגיעה ב־10 הדקות האחרונות. ההודעות נקראות בטלפון הזה בלבד, ושום דבר לא נשמר."</string>
+    <string name="zt_sms_code_spoken">"הקלדת הקוד %s מהודעת SMS"</string>
+    <string name="zt_sms_code_dismiss">"סגירת הקוד"</string>
 </resources>
