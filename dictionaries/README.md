@@ -4,13 +4,17 @@
 |---|---|---|
 | `he_zt_wordlist.combined.gz` | The "ZT Hebrew" list. Becomes `android/app/src/main/assets/dicts/main_he.dict` | CC BY-SA 4.0 and AGPL-3.0, see below |
 | `iw_wordlist.combined.gz` | The Android Hebrew list, one of the inputs. Android Open Source Project, LatinIME, `dictionaries/iw_wordlist.combined.gz` | Apache-2.0 |
-| `build_zt_hebrew.py` | Builds the first file from the inputs | AGPL-3.0 |
+| `build_zt_hebrew.py` | Builds the words of the first file from the inputs | AGPL-3.0 |
+| `count_hebrew_pairs.py` | Counts which word follows which in Hebrew Wikipedia (run by `.github/workflows/dictionary-sources.yml`) | AGPL-3.0 |
+| `add_hebrew_pairs.py` | Adds those word pairs and the offensive marks to the first file | AGPL-3.0 |
+| `he_offensive.txt` | Hebrew curses, vulgar words and slurs the keyboard never suggests | CC BY-SA 4.0 and AGPL-3.0 |
 | `emoji_he_wordlist.combined.gz`, `emoji_en_wordlist.combined.gz` | Emoji search words and emoji names. Become `android/app/src/main/assets/dicts/emoji_he.dict` and `emoji_en.dict` | Unicode License v3, see below |
 | `build_emoji_wordlist.py` | Builds the emoji lists from Unicode CLDR | AGPL-3.0 |
 
 ## The ZT Hebrew list
 
-181,813 words with how common each one is, and no word pairs yet.
+181,813 words with how common each one is, 565,374 word pairs (which words tend to come
+next), and 52 words marked possibly offensive.
 
 Hebrew glues "and", "the", "that", "when", "in", "to" onto the front of a word (ואני,
 כשהגעתי, והילדים). The Android list holds 94,799 words and few of those forms, so a
@@ -26,12 +30,39 @@ your own typing. On the subtitle counts themselves, the Android list misses abou
 words in every 1,000 typed and the ZT list about 28. The words were chosen from those
 same counts, so on other text the gain will be smaller.
 
+### Word pairs
+
+A word pair lets the keyboard offer the next word before a letter is typed: after "אני" it
+offers "לא", "רוצה", "חושב"; after "הולך" it offers "וגדל", "להיות". The pairs are counted in
+Hebrew Wikipedia: two Hebrew words of the list side by side in a sentence. For each word the
+list keeps up to 12 next words, each seen at least 5 times and clearly more likely after that
+word than on its own (the keyboard already knows the rest). Wikipedia is written, not chatty,
+Hebrew; the keyboard also learns pairs from your own typing.
+
+Wikipedia is too large for this repository, so the counting runs on GitHub:
+`.github/workflows/dictionary-sources.yml` runs `count_hebrew_pairs.py` on the Hebrew part of
+the [Wikimedia `wikipedia` dataset](https://huggingface.co/datasets/wikimedia/wikipedia)
+(config `20231101.he`, revision `b04c8d1ceb2f5cd4588862100d08de323dccfbaa`) and publishes the
+counts, `he_wiki_pairs.tsv.gz`, to the release
+[`dictionary-sources`](https://github.com/EdoSag/Zero-Trust-Keyboard/releases/tag/dictionary-sources)
+together with the sha256 of every Wikipedia file it read. The counts used here have sha256
+`407fc3888769f13e6de9beeacb6b9a36edb8b0c0ba1f47598ecb2e2573843f4f` and were counted from the
+words-only list below (sha256 `d3a9a094...`).
+
+### Possibly offensive words
+
+The 52 words in `he_offensive.txt` are marked possibly offensive. With "Block offensive words"
+on (the default) the keyboard never suggests them, and no word pair leads to one; typing one
+still works. Only curses, vulgar words and slurs are in it. Words with an everyday meaning
+(כוס, cup; מוצץ, dummy; medical words) are left out on purpose.
+
 ### Inputs
 
 | Input | Source | Licence | sha256 |
 |---|---|---|---|
 | `iw_wordlist.combined.gz` | in this folder | Apache-2.0 | `0fbbaa614e8512fdf2dfe7ce091c0fd011074eae654041a2ccd78459ca24c0fc` |
 | `he_IL.dic`, `he_IL.aff` | [Hspell](http://hspell.ivrix.org.il/) 1.4 by Nadav Har'El and Dan Kenigsberg, as packaged in [LibreOffice dictionaries](https://github.com/LibreOffice/dictionaries/tree/master/he_IL) | AGPL-3.0 | `5f5331f90ed775bd527f6fb7ad1ead9a1b7d8ce46ad640c2387d9d1dc91d3058`, `6caf86b3a545be5614f135d33a48baa244a59aca43f051dda6173d5d9cbc7700` |
+| `he_wiki_pairs.tsv.gz` | Counted by this repository from [Hebrew Wikipedia](https://he.wikipedia.org/), see above | CC BY-SA 4.0 | `407fc3888769f13e6de9beeacb6b9a36edb8b0c0ba1f47598ecb2e2573843f4f` |
 | `he_full.txt` | [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave, `content/2018/he/he_full.txt`: counts from the OpenSubtitles 2018 collection ([opensubtitles.org](http://www.opensubtitles.org/), via OPUS) | CC BY-SA 4.0 | `a69a3f390eb53183bf191c4eac18282592992aef9ff184c5dcf8919f5ea0f773` |
 
 The Hspell and FrequencyWords files are not copied into this repository; fetch them from
@@ -41,15 +72,19 @@ the links above and check the sha256.
 
 ```sh
 python3 build_zt_hebrew.py iw_wordlist.combined.gz he_IL.dic he_IL.aff he_full.txt he_zt_wordlist.combined.gz
+python3 add_hebrew_pairs.py he_zt_wordlist.combined.gz he_wiki_pairs.tsv.gz he_offensive.txt
 ```
 
-The same inputs always give the same file, sha256
-`d3a9a094c0f670dcb4cda1b9bbbe09e2f7fa9799d583ba9126dfdcb0a243da4f`. The script only reads
-the inputs; it runs nothing from them.
+The first step always gives the same words-only file, sha256
+`d3a9a094c0f670dcb4cda1b9bbbe09e2f7fa9799d583ba9126dfdcb0a243da4f`; the second turns it
+into the file here, sha256
+`85562ebf180a04e2c2c58da5219ca23e51e2db2dcc91060012ef754705fc09f8`. Running the second step
+again on its own output gives the same file. The scripts only read the inputs; they run
+nothing from them.
 
 ### Licence of the list
 
-The list is built from CC BY-SA 4.0 counts and checked against AGPL-3.0 Hspell data, so
+The list is built from CC BY-SA 4.0 counts (subtitles and Wikipedia) and checked against AGPL-3.0 Hspell data, so
 it is shared under both: Creative Commons Attribution-ShareAlike 4.0 and the GNU Affero
 General Public License v3. The Android words in it remain available under Apache-2.0 in
 `iw_wordlist.combined.gz`. The app shows these credits under Open source licences.
