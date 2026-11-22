@@ -15,7 +15,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG=$(gh api --paginate "repos/ggml-org/llama.cpp/releases?per_page=100" --jq '.[] | select(.published_at < "2026-11-01") | .tag_name' | head -1)
+          TAG=""
+          for page in 1 2 3 4 5 6; do
+            gh api "repos/ggml-org/llama.cpp/releases?per_page=100&page=$page" --jq '.[] | select(.published_at < "2026-11-01") | .tag_name' > tags.txt
+            if [ -s tags.txt ]; then TAG=$(sed -n 1p tags.txt); break; fi
+          done
           echo "TAG $TAG"
           curl -sSfL -o llama.tar.gz "https://github.com/ggml-org/llama.cpp/archive/refs/tags/$TAG.tar.gz"
           echo "LLAMA TAG $TAG SHA256 $(sha256sum llama.tar.gz | cut -d' ' -f1)"
