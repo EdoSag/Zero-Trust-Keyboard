@@ -599,4 +599,41 @@
     <string name="zt_voice_download_damaged">"הקובץ שהורד היה פגום והוסר. הקישו על המודל כדי לנסות שוב."</string>
     <string name="zt_voice_download_no_space">"אין מספיק מקום פנוי בטלפון"</string>
     <string name="zt_voice_download_failed">"ההורדה נכשלה"</string>
+
+    <!-- ZT Keyboard: translate on the phone -->
+    <string name="translate" tools:keep="@string/translate">"תרגום"</string>
+    <string name="zt_translate_title">"תרגום"</string>
+    <string name="zt_translate_intro">"כותבים בשפה אחת, לוחצים על מקש התרגום בסרגל הכלים, ומה שנכתב מוחלף בתרגום שלו. כדי לתרגם רק חלק מהטקסט, מסמנים אותו. התרגום נעשה בטלפון הזה, כך שמה שכתבתם לא יוצא ממנו. כל שפה מורידים פעם אחת."</string>
+    <string name="zt_translate_not_in_edition">"תרגום אינו חלק ממהדורת האופליין, שאינה יכולה להוריד שפות."</string>
+    <string name="zt_translate_languages">"תרגום בין"</string>
+    <string name="zt_translate_mine">"אני כותב/ת ב"</string>
+    <string name="zt_translate_other">"לתרגם ל"</string>
+    <string name="zt_translate_pair_missing">"כדי לתרגם בין %1$s ל-%2$s יש להוריד את השפות למטה. אנגלית אינה דורשת הורדה."</string>
+    <string name="zt_translate_on_phone">"שפות בטלפון הזה"</string>
+    <string name="zt_translate_none_on_phone">"עדיין אין שפה. אפשר להוריד למטה."</string>
+    <string name="zt_translate_size">"%d מ״ב"</string>
+    <string name="zt_translate_download">"הורדת שפה"</string>
+    <string name="zt_translate_show_downloads">"הצגת השפות"</string>
+    <string name="zt_translate_show_downloads_summary">"מביא את רשימת השפות מהגרסאות של ZT Browser ב-GitHub"</string>
+    <string name="zt_translate_list_loading">"מביא את הרשימה…"</string>
+    <string name="zt_translate_list_failed">"לא ניתן היה להביא את הרשימה. הקישו כדי לנסות שוב."</string>
+    <string name="zt_translate_downloading">"מוריד: %1$d מתוך %2$d מ״ב"</string>
+    <string name="zt_translate_download_confirm">"להוריד את %1$s (%2$d מ״ב)?"</string>
+    <string name="zt_translate_delete_confirm">"להסיר את %s מהטלפון הזה?"</string>
+    <string name="zt_translate_download_stopped">"ההורדה נעצרה. הקישו על השפה כדי לנסות שוב."</string>
+    <string name="zt_translate_download_damaged">"הקובץ שהורד לא היה הקובץ הצפוי והוסר. הקישו על השפה כדי לנסות שוב."</string>
+    <string name="zt_translate_download_no_space">"אין מספיק מקום פנוי בטלפון"</string>
+    <string name="zt_translate_download_failed">"ההורדה נכשלה"</string>
+    <string name="zt_translate_from_to">"%1$s ← %2$s"</string>
+    <string name="zt_translate_working">"מתרגם %s…"</string>
+    <string name="zt_translate_working_time">"מתרגם %1$s… %2$d שנ׳"</string>
+    <string name="zt_translate_cancel">"ביטול"</string>
+    <string name="zt_translate_undo">"ביטול התרגום"</string>
+    <string name="zt_translate_done">"סיום"</string>
+    <string name="zt_translate_nothing">"אין מה לתרגם"</string>
+    <string name="zt_translate_too_long">"הטקסט ארוך מדי לתרגום בבת אחת. סמנו חלק ממנו."</string>
+    <string name="zt_translate_not_here">"סיסמאות אינן מתורגמות"</string>
+    <string name="zt_translate_needs_languages">"קודם יש להוריד את השפות לתרגום"</string>
+    <string name="zt_translate_failed">"התרגום נכשל, נסו שוב"</string>
+    <string name="zt_translate_text_changed">"הטקסט השתנה, ולכן לא תורגם"</string>
 </resources>

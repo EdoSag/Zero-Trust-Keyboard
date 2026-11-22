@@ -10,6 +10,7 @@ import android.text.TextUtils
 import com.android.inputmethod.latin.utils.BinaryDictionaryUtils
 import helium314.keyboard.latin.dictionary.Dictionary
 import helium314.keyboard.latin.common.FileUtils
+import helium314.keyboard.latin.common.LocaleUtils
 import helium314.keyboard.latin.common.LocaleUtils.constructLocale
 import helium314.keyboard.latin.common.loopOverCodePoints
 import helium314.keyboard.latin.define.DecoderSpecificConstants
@@ -109,8 +110,32 @@ object DictionaryInfoUtils {
             .map { it.locale() }.filter { getCachedDictForLocaleAndType(it, Dictionary.TYPE_EMOJI, context) != null }
 
     @JvmStatic
-    fun getCachedDictForLocaleAndType(locale: Locale, type: String, context: Context): File? =
-        getCachedDictsForLocale(locale, context).firstOrNull { it.name.substringBefore("_") == type }
+    fun getCachedDictForLocaleAndType(locale: Locale, type: String, context: Context): File? {
+        val cached = getCachedDictsForLocale(locale, context)
+        // One the user added wins, then the one that came with the app.
+        return cached.firstOrNull { it.name.substringBefore("_") == type }
+            ?: cached.firstOrNull { it.name == "$type.dict" }
+            ?: extractBundledEmojiDictionary(locale, type, context)
+    }
+
+    /** True for an emoji dictionary in the cache, whether the user added it or it came with the app. */
+    fun isEmojiDictionaryFile(name: String): Boolean =
+        name.substringBefore("_") == Dictionary.TYPE_EMOJI || name == Dictionary.TYPE_EMOJI + ".dict"
+
+    // ZT Keyboard comes with emoji dictionaries (assets/dicts/emoji_<language>.dict), so emoji
+    // search and emoji names work without a download. The asset names are read once.
+    private var bundledEmojiDictionaries: List<String>? = null
+
+    private fun extractBundledEmojiDictionary(locale: Locale, type: String, context: Context): File? {
+        if (type != Dictionary.TYPE_EMOJI) return null
+        val bundled = bundledEmojiDictionaries
+            ?: getAssetsDictionaryList(context).orEmpty()
+                .filter { it.substringBefore("_") == Dictionary.TYPE_EMOJI }
+                .also { bundledEmojiDictionaries = it }
+        val best = LocaleUtils.getBestMatch(locale, bundled) { extractLocaleFromAssetsDictionaryFile(it) }
+            ?: return null
+        return extractAssetsDictionary(best, locale, context)
+    }
 
     fun getCachedDictsForLocale(locale: Locale, context: Context) =
         getCacheDirectoryForLocale(locale, context)?.let { File(it).listFiles() }.orEmpty()
@@ -138,9 +163,14 @@ object DictionaryInfoUtils {
     }
 
     // actually we could extract assets dicts to unprotected storage
+    // Synchronized, and an extracted file is kept: the keyboard view and the dictionary loader may
+    // both ask for the bundled emoji dictionary, and a file must not be rewritten while it is open.
+    // Extracted files are removed when the app is updated (AppUpgrade), so a kept file is never old.
+    @Synchronized
     fun extractAssetsDictionary(dictionaryFileName: String, locale: Locale, context: Context): File? {
         val cacheDir = getCacheDirectoryForLocale(locale, context) ?: return null
         val targetFile = File(cacheDir, "${dictionaryFileName.substringBefore("_")}.dict")
+        if (targetFile.isFile && targetFile.length() > 0) return targetFile
         try {
             FileUtils.copyStreamToNewFile(
                 context.assets.open(ASSETS_DICTIONARY_FOLDER + File.separator + dictionaryFileName),

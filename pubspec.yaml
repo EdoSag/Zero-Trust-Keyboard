@@ -1,7 +1,7 @@
 name: zerotrust_keyboard
 description: "Zero-Trust Keyboard: a private keyboard. Everything you type stays on your phone."
 publish_to: none
-version: 0.5.0+10
+version: 0.7.0+16
 
 environment:
   sdk: ^3.9.0
@@ -29,6 +29,8 @@ dependencies:
       ref: cd50d2ddfeb18abb25687b9f956478d7ced83aae
   flutter_riverpod: ^3.5.0
   supabase_flutter: ^2.9.0
+  # Hashes that stand for pinned clips in the list of what was synced.
+  crypto: ^3.0.6
   # Random ids for synced items.
   uuid: ^4.5.0
   # Reset links from account emails (EmailLinks).
