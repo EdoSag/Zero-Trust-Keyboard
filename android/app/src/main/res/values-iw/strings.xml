@@ -602,6 +602,11 @@
 
     <!-- ZT Keyboard: translate on the phone -->
     <string name="translate" tools:keep="@string/translate">"תרגום"</string>
+    <string name="zt_insert" tools:keep="@string/zt_insert">"הוספה מאפליקציות ZT"</string>
+    <string name="zt_insert_title">"הוספה מתוך"</string>
+    <string name="zt_insert_no_apps">"אין עדיין בטלפון אפליקציית Zero-Trust שיכולה להוסיף טקסט. כדאי לעדכן את ZT Contacts,‏ ZT Notes או ZT Calendar."</string>
+    <string name="zt_insert_failed">"לא ניתן לפתוח את האפליקציה."</string>
+    <string name="zt_insert_too_late">"זה לקח יותר מדי זמן. יש ללחוץ שוב על מקש ההוספה."</string>
     <string name="zt_translate_title">"תרגום"</string>
     <string name="zt_translate_intro">"כותבים בשפה אחת, לוחצים על מקש התרגום בסרגל הכלים, ומה שנכתב מוחלף בתרגום שלו. כדי לתרגם רק חלק מהטקסט, מסמנים אותו. התרגום נעשה בטלפון הזה, כך שמה שכתבתם לא יוצא ממנו. כל שפה מורידים פעם אחת."</string>
     <string name="zt_translate_not_in_edition">"תרגום אינו חלק ממהדורת האופליין, שאינה יכולה להוריד שפות."</string>

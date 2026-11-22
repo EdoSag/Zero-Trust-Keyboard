@@ -186,6 +186,7 @@ object KeyCode {
     const val DPAD =                      -10054
     /** ZT Keyboard: translate the text in the field, on the phone. */
     const val TRANSLATE =                 -10055
+    const val ZT_INSERT =                 -10056
 
     // Valid in popups and for toolbar key long press only
     const val KEY_REPEAT =                -11000
@@ -213,7 +214,7 @@ object KeyCode {
         MEDIA_PREVIOUS, VOL_UP, VOL_DOWN, MUTE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, BACK,
         TIMESTAMP, CTRL_LEFT, CTRL_RIGHT, ALT_LEFT, ALT_RIGHT, META_LEFT, META_RIGHT, SEND_INTENT_ONE, SEND_INTENT_TWO,
         SEND_INTENT_THREE, EMOJI_SEARCH, INLINE_EMOJI_SEARCH_DONE, META_LOCK,
-        BACKGROUND_GATHERING, BACKGROUND_GATHERING_TEMP_OFF, DPAD, TRANSLATE,
+        BACKGROUND_GATHERING, BACKGROUND_GATHERING_TEMP_OFF, DPAD, TRANSLATE, ZT_INSERT,
         -> this
 
         KEY_REPEAT if (longPress) -> this
@@ -343,7 +344,7 @@ object KeyCode {
     }
 
     @JvmStatic fun isIsBlockedWhenLocked(keyCode: Int) = when (keyCode) {
-        SETTINGS, TOGGLE_FLOATING_WINDOW, CLIPBOARD, CLIPBOARD_PASTE, TRANSLATE -> true
+        SETTINGS, TOGGLE_FLOATING_WINDOW, CLIPBOARD, CLIPBOARD_PASTE, TRANSLATE, ZT_INSERT -> true
         else -> false
     }
 }

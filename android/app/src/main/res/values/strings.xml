@@ -1368,6 +1368,12 @@ New dictionary:
 
     <!-- ZT Keyboard: translate on the phone -->
     <string name="translate" tools:keep="@string/translate">Translate</string>
+    <!-- ZT Keyboard: toolbar key that types a text picked in another Zero-Trust app -->
+    <string name="zt_insert" tools:keep="@string/zt_insert">Insert from ZT apps</string>
+    <string name="zt_insert_title">Insert from</string>
+    <string name="zt_insert_no_apps">No Zero-Trust app on this phone can insert text yet. Update ZT Contacts, ZT Notes or ZT Calendar.</string>
+    <string name="zt_insert_failed">Could not open that app.</string>
+    <string name="zt_insert_too_late">That took too long. Press the insert key again.</string>
     <string name="zt_translate_title">Translate</string>
     <string name="zt_translate_intro">Write in one language, press the Translate key in the toolbar, and what you wrote is replaced by its translation. Select part of the text to translate only that part. The translation is worked out on this phone, so what you write never leaves it. Each language is downloaded once.</string>
     <string name="zt_translate_not_in_edition">Translating is not part of the Offline edition, which cannot download languages.</string>

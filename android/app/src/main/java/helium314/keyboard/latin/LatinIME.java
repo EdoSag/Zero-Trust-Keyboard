@@ -1043,6 +1043,14 @@ public class LatinIME extends InputMethodService implements
                 currentSettingsValues.mGestureFloatingPreviewTextEnabled);
 
         if (TRACE) Debug.startMethodTracing("/data/trace/latinime");
+
+        // ZT Keyboard: a text picked in another Zero-Trust app is typed once the keyboard is
+        // back in the text field that asked for it.
+        final String picked = dev.sagron.zerotrustkeyboard.insert.InsertHandOver.INSTANCE.take(
+                editorInfo == null ? null : editorInfo.packageName,
+                editorInfo == null ? 0 : editorInfo.fieldId, android.os.SystemClock.elapsedRealtime());
+        if (picked != null && !mSettings.getCurrent().mIsLocked)
+            mHandler.post(() -> onTextInput(picked));
     }
 
     @Override
