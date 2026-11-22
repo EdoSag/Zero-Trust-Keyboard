@@ -38,6 +38,7 @@ fun MainSettingsScreen(
     onClickGestureTyping: () -> Unit,
     onClickVoiceTyping: () -> Unit,
     onClickTranslate: () -> Unit,
+    onClickWritingHelp: () -> Unit,
     onClickDataGathering: () -> Unit,
     onClickAdvanced: () -> Unit,
     onClickAppearance: () -> Unit,
@@ -94,6 +95,12 @@ fun MainSettingsScreen(
                         onClick = onClickTranslate,
                         icon = R.drawable.ic_translate
                     ) { NextScreenIcon() }
+                if (dev.sagron.zerotrustkeyboard.lm.LanguageModels.available)
+                    Preference(
+                        name = stringResource(R.string.zt_writing_title),
+                        onClick = onClickWritingHelp,
+                        icon = R.drawable.ic_zt_writing
+                    ) { NextScreenIcon() }
                 // we don't even show the menu if data gathering phase ended more than 2 weeks ago
                 if (JniUtils.sHaveGestureLib && System.currentTimeMillis() < END_DATE_EPOCH_MILLIS + TWO_WEEKS_IN_MILLIS)
                     Preference(
@@ -137,7 +144,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

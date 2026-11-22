@@ -88,9 +88,9 @@ open class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         settingsContainer = SettingsContainer(this)
 
         val spellchecker = intent?.getBooleanExtra("spellchecker", false) ?: false
-        // The keyboard can open a screen directly (voice typing or translate, when a model is missing).
+        // The keyboard can open a screen directly (voice typing, translate or writing help, when a model is missing).
         val startScreen = intent?.getStringExtra(dev.sagron.zerotrustkeyboard.voice.VoiceTyping.EXTRA_SCREEN)
-            ?.takeIf { it == SettingsDestination.VoiceTyping || it == SettingsDestination.Translate }
+            ?.takeIf { it == SettingsDestination.VoiceTyping || it == SettingsDestination.Translate || it == SettingsDestination.WritingHelp }
 
         val cv = ComposeView(context = this)
         setContentView(cv)

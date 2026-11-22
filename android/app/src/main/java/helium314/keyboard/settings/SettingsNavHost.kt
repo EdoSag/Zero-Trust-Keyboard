@@ -22,6 +22,7 @@ import helium314.keyboard.settings.screens.AppearanceScreen
 import helium314.keyboard.settings.screens.ColorsScreen
 import helium314.keyboard.settings.screens.DebugScreen
 import helium314.keyboard.settings.screens.DictionaryScreen
+import dev.sagron.zerotrustkeyboard.lm.WritingHelpScreen
 import dev.sagron.zerotrustkeyboard.translate.TranslateScreen
 import dev.sagron.zerotrustkeyboard.voice.VoiceTypingScreen
 import helium314.keyboard.settings.screens.GestureTypingScreen
@@ -76,6 +77,7 @@ fun SettingsNavHost(
                 onClickGestureTyping = { navController.navigate(SettingsDestination.GestureTyping) },
                 onClickVoiceTyping = { navController.navigate(SettingsDestination.VoiceTyping) },
                 onClickTranslate = { navController.navigate(SettingsDestination.Translate) },
+                onClickWritingHelp = { navController.navigate(SettingsDestination.WritingHelp) },
                 onClickDataGathering = { navController.navigate(SettingsDestination.DataGathering) },
                 onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
                 onClickAppearance = { navController.navigate(SettingsDestination.Appearance) },
@@ -105,6 +107,9 @@ fun SettingsNavHost(
         }
         composable(SettingsDestination.Translate) {
             TranslateScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.WritingHelp) {
+            WritingHelpScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.DataGathering) {
             GestureDataScreen(onClickBack = ::goBack)
@@ -163,6 +168,7 @@ object SettingsDestination {
     const val GestureTyping = "gesture_typing"
     const val VoiceTyping = "voice_typing"
     const val Translate = "translate"
+    const val WritingHelp = "writing_help"
     const val DataGathering = "data_gathering" // remove when data gathering phase is done (end of 2026 latest)
     const val DataReview = "data_review" // remove when data gathering phase is done (end of 2026 latest)
     const val Advanced = "advanced"
