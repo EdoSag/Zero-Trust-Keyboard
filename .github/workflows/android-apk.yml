@@ -182,12 +182,15 @@ jobs:
         run: |
           set -e
           ./gradlew --no-daemon -q -PztOffline -PztPlay :app:processOfflineReleaseManifest
-          MERGED=app/build/intermediates/merged_manifests/offlineRelease
-          test -d "$MERGED"
-          if grep -rq "android.permission.READ_SMS" "$MERGED"; then
+          # The Flutter project moves the build folder to build/app at the repository root.
+          MERGED=$(find ../build/app/intermediates -path "*merged_manifest*" -path "*offlineRelease*" -name AndroidManifest.xml | head -1)
+          test -n "$MERGED" || { echo "::error::No merged manifest found"; exit 1; }
+          echo "Checking $MERGED"
+          if grep -q "android.permission.READ_SMS" "$MERGED"; then
             echo "::error::-PztPlay builds must not ask for READ_SMS"; exit 1
           fi
-          rm -rf "$MERGED"
+          grep -q "android.permission.RECORD_AUDIO" "$MERGED"
+          rm -f "$MERGED"
 
       - name: Build the Offline edition APK
         run: |
