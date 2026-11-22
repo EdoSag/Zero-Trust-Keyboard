@@ -60,6 +60,12 @@ object SmsCodeSuggestion {
         textView.contentDescription = ime.getString(R.string.zt_sms_code_spoken, found.code.toCharArray().joinToString(" "))
         textView.setOnClickListener {
             SmsCodes.markDone(found.messageId)
+            if (System.currentTimeMillis() - found.receivedAt > SmsCodes.MAX_AGE_MS) {
+                // Too old by now: the chip should already be gone.
+                binding.root.isGone = true
+                ime.removeExternalSuggestions()
+                return@setOnClickListener
+            }
             ime.onTextInput(found.code)
             AudioAndHapticFeedbackManager.getInstance().performHapticAndAudioFeedback(KeyCode.NOT_SPECIFIED, it, HapticEvent.KEY_PRESS)
             binding.root.isGone = true
@@ -81,6 +87,15 @@ object SmsCodeSuggestion {
         icon?.let { colors.setColor(it, ColorType.CLIPBOARD_SUGGESTION_ICON) }
         colors.setColor(closeButton, ColorType.REMOVE_SUGGESTION_ICON)
         colors.setBackground(binding.root, ColorType.CLIPBOARD_SUGGESTION_BACKGROUND)
+
+        // Take the chip away when the code gets too old, even if nothing else happens.
+        val left = found.receivedAt + SmsCodes.MAX_AGE_MS - System.currentTimeMillis()
+        binding.root.postDelayed({
+            if (binding.root.isAttachedToWindow && !binding.root.isGone) {
+                binding.root.isGone = true
+                ime.removeExternalSuggestions()
+            }
+        }, left.coerceAtLeast(0))
         return binding.root
     }
 }

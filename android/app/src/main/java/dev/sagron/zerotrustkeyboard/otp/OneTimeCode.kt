@@ -10,9 +10,16 @@ package dev.sagron.zerotrustkeyboard.otp
  * "482-913" are read as 482913, and "G-482913" as 482913.
  */
 object OneTimeCode {
-    private val KEYWORDS = Regex(
-        "code|otp|passcode|password|pin\\b|verif|one[- ]time|2fa|two[- ]factor|log ?in|sign ?in|token" +
-            "|קוד|סיסמ|אימות|לאימות|הזדהות|כניסה|התחברות|קוד חד[- ]פעמי",
+    // Words that name the code itself: the code is ranked against these when the message
+    // has one, so "To log in to account 1234, use code 482913" gives 482913.
+    private val CODE_WORDS = Regex(
+        "code|otp|passcode|password|pin\\b|token|קוד|סיסמ",
+        RegexOption.IGNORE_CASE,
+    )
+
+    // Words that only say what the message is about.
+    private val TOPIC_WORDS = Regex(
+        "verif|one[- ]time|2fa|two[- ]factor|log ?in|sign ?in|אימות|הזדהות|כניסה|התחברות",
         RegexOption.IGNORE_CASE,
     )
 
@@ -30,7 +37,9 @@ object OneTimeCode {
     /** The code in [message], or null when it carries none. */
     fun find(message: String?): String? {
         if (message.isNullOrBlank()) return null
-        val keyword = KEYWORDS.find(message) ?: return null
+        val keywords = CODE_WORDS.findAll(message).map { it.range }.toList()
+            .ifEmpty { TOPIC_WORDS.findAll(message).map { it.range }.toList() }
+        if (keywords.isEmpty()) return null
         var best: String? = null
         var bestDistance = Int.MAX_VALUE
         for (match in CANDIDATE.findAll(message)) {
@@ -42,8 +51,10 @@ object OneTimeCode {
             if (looksLikeAYear(code, message, match.range)) continue
             // The code usually follows the word "code"; prefer the nearest number after it,
             // then the nearest one before it.
-            val distance = if (match.range.first >= keyword.range.last) match.range.first - keyword.range.last
-                else 10_000 + keyword.range.first - match.range.last
+            val distance = keywords.minOf { keyword ->
+                if (match.range.first > keyword.last) match.range.first - keyword.last
+                else 10_000 + keyword.first - match.range.last
+            }
             if (distance < bestDistance) {
                 best = code
                 bestDistance = distance

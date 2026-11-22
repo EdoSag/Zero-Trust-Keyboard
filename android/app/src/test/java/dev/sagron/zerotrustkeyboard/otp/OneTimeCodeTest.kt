@@ -21,6 +21,9 @@ class OneTimeCodeTest {
     @Test fun prefersTheNumberRightAfterTheWordCode() {
         assertEquals("482913", OneTimeCode.find("Order 55667788 shipped. Your code is 482913"))
         assertEquals("482913", OneTimeCode.find("Use code 482913 to confirm order 55667788"))
+        assertEquals("482913", OneTimeCode.find("To log in to account 1234, use code 482913"))
+        assertEquals("482913", OneTimeCode.find("כניסה לחשבון 5566: הקוד שלך הוא 482913"))
+        assertEquals("482913", OneTimeCode.find("Transaction 7788 needs verification. Code: 482913"))
     }
 
     @Test fun ignoresMessagesWithoutACode() {
