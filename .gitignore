@@ -17,6 +17,7 @@ fastlane/Appfile
 *.diff
 *.sh
 !/voice-models/mirror.sh
+!/language-models/mirror.sh
 
 # Flutter/Dart (the ZT app around the keyboard, full edition)
 .dart_tool/
