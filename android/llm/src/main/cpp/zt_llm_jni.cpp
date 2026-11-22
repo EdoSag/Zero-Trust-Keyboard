@@ -52,7 +52,6 @@ Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_open(JNIEnv *env, jclass, jstri
 
     llama_model_params modelParams = llama_model_default_params();
     modelParams.n_gpu_layers = 0;
-    modelParams.use_mmap = true;
     const char *path = env->GetStringUTFChars(modelPath, nullptr);
     engine->model = llama_model_load_from_file(path, modelParams);
     env->ReleaseStringUTFChars(modelPath, path);
