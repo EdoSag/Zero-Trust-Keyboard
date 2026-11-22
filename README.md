@@ -25,6 +25,15 @@ shortcuts you added are kept the same on every phone of the account, end-to-end 
 off until you turn it on, and it runs while the app is open and unlocked, because the keyboard
 itself never holds the account's key.
 
+**Codes from text messages**: when a one-time code arrives by SMS ("Your code is 482913",
+"קוד האימות שלך: 482913"), the keyboard offers it as a chip in the suggestion strip, in a
+number field or an empty one-line field, for 10 minutes. One tap types it. Turn it on under
+Settings > Text correction > Suggest codes from text messages; the keyboard then asks for
+permission to read text messages. The messages are read on the phone only and nothing is
+kept. Android 15 hides these codes from notification readers, so reading the messages is the
+only way. Google Play allows that permission only for SMS apps, so this is in the GitHub
+builds only; the Play build leaves the permission and the setting out.
+
 ## Two editions
 
 | | ZT Keyboard | ZT Keyboard Offline |
@@ -33,6 +42,7 @@ itself never holds the account's key.
 | The keyboard | yes | yes, the same one |
 | ZT app around it (setup, optional Zero-Trust account, app lock, shared settings) | yes | no |
 | `INTERNET` permission | yes, for the account only | **no** |
+| `READ_SMS` permission (codes from text messages, off until turned on) | yes, GitHub build only | yes |
 | Launcher icon opens | the ZT app | the keyboard's settings |
 
 The keyboard is a native Android service (`android/`, Kotlin/Java/C++). The ZT app is Flutter

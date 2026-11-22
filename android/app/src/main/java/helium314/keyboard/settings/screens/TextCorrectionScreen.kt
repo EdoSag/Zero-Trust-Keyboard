@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sagron.zerotrustkeyboard.otp.SmsCodes
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.permissions.PermissionsUtil
@@ -90,6 +91,7 @@ fun TextCorrectionScreen(
         if (prefs.getBoolean(Settings.PREF_SUGGEST_PUNCTUATION, Defaults.PREF_SUGGEST_PUNCTUATION))
             Settings.PREF_PUNCTUATION_SUGGESTIONS else null,
         Settings.PREF_SUGGEST_CLIPBOARD_CONTENT,
+        if (SmsCodes.isDeclared(LocalContext.current)) Settings.PREF_ZT_SMS_CODES else null,
         Settings.PREF_USE_CONTACTS,
         Settings.PREF_USE_APPS,
         if (prefs.getBoolean(Settings.PREF_KEY_USE_PERSONALIZED_DICTS, Defaults.PREF_KEY_USE_PERSONALIZED_DICTS))
@@ -257,6 +259,27 @@ fun createCorrectionSettings(context: Context) = listOf(
             allowCheckedChange = {
                 if (it && !granted) {
                     launcher.launch(Manifest.permission.READ_CONTACTS)
+                    false
+                } else true
+            }
+        )
+    },
+    // ZT Keyboard: one-time codes from text messages. Only builds that declare the
+    // permission (not the Google Play one) show this setting.
+    Setting(context, Settings.PREF_ZT_SMS_CODES,
+        R.string.zt_sms_codes, R.string.zt_sms_codes_summary
+    ) { setting ->
+        val activity = LocalContext.current.getActivity() ?: return@Setting
+        var granted by remember { mutableStateOf(PermissionsUtil.checkAllPermissionsGranted(activity, Manifest.permission.READ_SMS)) }
+        val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            granted = it
+            if (granted)
+                activity.prefs().edit { putBoolean(setting.key, true) }
+        }
+        SwitchPreference(setting, Defaults.PREF_ZT_SMS_CODES,
+            allowCheckedChange = {
+                if (it && !granted) {
+                    launcher.launch(Manifest.permission.READ_SMS)
                     false
                 } else true
             }

@@ -25,6 +25,7 @@ import android.os.Process;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.CompletionInfo;
@@ -150,6 +151,9 @@ public class LatinIME extends InputMethodService implements
     public dev.sagron.zerotrustkeyboard.voice.VoiceTyping getVoiceTyping() { return mVoiceTyping; }
     private final dev.sagron.zerotrustkeyboard.translate.TranslateTyping mTranslateTyping =
             new dev.sagron.zerotrustkeyboard.translate.TranslateTyping(this);
+    // ZT Keyboard: offers a one-time code that arrives by text message while a field is open.
+    private final dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher mSmsCodeWatcher =
+            new dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher(this, this::onTextMessageArrived);
     public dev.sagron.zerotrustkeyboard.translate.TranslateTyping getTranslateTyping() { return mTranslateTyping; }
 
     /** ZT Keyboard: lets the word being typed stand as it is, so the text field holds everything written. */
@@ -1051,6 +1055,9 @@ public class LatinIME extends InputMethodService implements
                 editorInfo == null ? 0 : editorInfo.fieldId, android.os.SystemClock.elapsedRealtime());
         if (picked != null && !mSettings.getCurrent().mIsLocked)
             mHandler.post(() -> onTextInput(picked));
+
+        if (mSettings.getCurrent().mZtSmsCodes) mSmsCodeWatcher.start();
+        else mSmsCodeWatcher.stop();
     }
 
     @Override
@@ -1092,6 +1099,7 @@ public class LatinIME extends InputMethodService implements
         super.onFinishInputView(finishingInput);
         mVoiceTyping.cancel();
         mTranslateTyping.cancel();
+        mSmsCodeWatcher.stop();
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
     }
@@ -1611,12 +1619,32 @@ public class LatinIME extends InputMethodService implements
      */
     public boolean tryShowClipboardSuggestion() {
         if (!hasSuggestionStripView()) return false;
+        // ZT Keyboard: a one-time code from a recent text message comes first.
+        final View codeView = dev.sagron.zerotrustkeyboard.otp.SmsCodeSuggestion.INSTANCE.view(
+                this, getCurrentInputEditorInfo(), mSuggestionStripView, isTextFieldEmpty());
+        if (codeView != null) {
+            mSuggestionStripView.setExternalSuggestionView(codeView, false);
+            return true;
+        }
         View clipboardView = mClipboardHistoryManager.getClipboardSuggestionView(getCurrentInputEditorInfo(), mSuggestionStripView);
         if (clipboardView != null) {
             mSuggestionStripView.setExternalSuggestionView(clipboardView, false);
             return true;
         }
         return false;
+    }
+
+    private boolean isTextFieldEmpty() {
+        return mInputLogic.mConnection.getCodePointBeforeCursor() == Constants.NOT_A_CODE
+                && TextUtils.isEmpty(mInputLogic.mConnection.getTextAfterCursor(1, 0));
+    }
+
+    /** A text message arrived while the keyboard is open: offer its code if it fits here. */
+    private void onTextMessageArrived() {
+        if (!hasSuggestionStripView() || !isInputViewShown()) return;
+        if (!dev.sagron.zerotrustkeyboard.otp.SmsCodeSuggestion.INSTANCE.fits(getCurrentInputEditorInfo(), isTextFieldEmpty()))
+            return;
+        setNeutralSuggestionStrip();
     }
 
     // This will first try showing a clipboard suggestion. On success, the toolbar will be hidden

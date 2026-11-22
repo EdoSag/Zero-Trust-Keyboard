@@ -148,22 +148,46 @@ jobs:
           cp build/app/outputs/flutter-apk/app-full-release.apk "$APK"
           echo "APK=$APK" >> "$GITHUB_ENV"
 
+      - name: Check the APK can read one-time codes from text messages
+        run: |
+          set -e
+          AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          "$AAPT2" dump permissions "$APK" | grep -q "android.permission.READ_SMS" \
+            || { echo "::error::The APK should ask for READ_SMS (src/sms/AndroidManifest.xml)"; exit 1; }
+
       - name: Build the Google Play bundle
         # Google Play takes an .aab, not an .apk. Built for releases (and
         # manual runs) only, so pull request checks stay fast.
         if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         run: |
           set -e
-          flutter build appbundle --release --flavor full --build-number="$BUILD"
+          # -PztPlay leaves out READ_SMS, which Google Play allows only for SMS apps.
+          flutter build appbundle --release --flavor full --build-number="$BUILD" --android-project-arg=ztPlay=true
           AAB="$APP_SLUG-$VERSION-build$BUILD.aab"
           cp build/app/outputs/bundle/fullRelease/*.aab "$AAB"
           echo "AAB=$AAB" >> "$GITHUB_ENV"
+          if unzip -p "$AAB" base/manifest/AndroidManifest.xml | grep -aq "android.permission.READ_SMS"; then
+            echo "::error::The Google Play bundle must not ask for READ_SMS"; exit 1
+          fi
 
       - name: Keyboard unit tests
         # HeliBoard's own CI variant: skips tests known to fail upstream.
         if: github.event_name == 'pull_request'
         working-directory: android
         run: ./gradlew --no-daemon -PztOffline :app:testOfflineRunTestsUnitTest
+
+      - name: Check the Google Play build leaves out READ_SMS
+        if: github.event_name == 'pull_request'
+        working-directory: android
+        run: |
+          set -e
+          ./gradlew --no-daemon -q -PztOffline -PztPlay :app:processOfflineReleaseManifest
+          MERGED=app/build/intermediates/merged_manifests/offlineRelease
+          test -d "$MERGED"
+          if grep -rq "android.permission.READ_SMS" "$MERGED"; then
+            echo "::error::-PztPlay builds must not ask for READ_SMS"; exit 1
+          fi
+          rm -rf "$MERGED"
 
       - name: Build the Offline edition APK
         run: |
