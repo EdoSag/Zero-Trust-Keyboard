@@ -5,6 +5,7 @@ import helium314.keyboard.latin.makedict.DictIO
 import helium314.keyboard.latin.makedict.FusionDictionary
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -46,6 +47,26 @@ class BundledHebrewDictionaryTest {
         }
         // Subtitle credits are left out.
         assertNull(FusionDictionary.findWordInTree(words.mRootNodeArray, "וסונכרן"))
+    }
+
+    /** Word pairs from Hebrew Wikipedia: the keyboard can offer the next word. */
+    @Test fun itKnowsWhichWordsComeNext() {
+        val pairs = listOf("אני" to "רוצה", "בית" to "הספר", "הולך" to "להיות", "ראש" to "הממשלה")
+        for ((first, next) in pairs) {
+            val node = FusionDictionary.findWordInTree(words.mRootNodeArray, first)
+            assertNotNull(first, node)
+            assertNotNull("$first $next", node!!.getBigram(next))
+        }
+    }
+
+    /** Curses and slurs are never suggested; words with an everyday meaning still are. */
+    @Test fun rudeWordsAreMarked() {
+        for (word in listOf("זונה", "מזדיין", "שרמוטה", "חרא")) {
+            assertTrue(word, FusionDictionary.findWordInTree(words.mRootNodeArray, word)!!.getIsPossiblyOffensive())
+        }
+        for (word in listOf("כוס", "מוצץ", "שלום")) {
+            assertFalse(word, FusionDictionary.findWordInTree(words.mRootNodeArray, word)!!.getIsPossiblyOffensive())
+        }
     }
 
     /** Nothing from the Android list is lost or re-weighted. */

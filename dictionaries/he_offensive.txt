@@ -1,0 +1,57 @@
+# Hebrew words the keyboard marks "possibly offensive". With Settings > Text correction >
+# "Block offensive words" on (the default), it never suggests them; typing one still works.
+# Curses, vulgar words and slurs only. Words with an everyday meaning are left out on
+# purpose: כוס (cup), מוצץ (dummy), פין and the like. A word is marked only if the list
+# holds it. One word per line; "#" starts a comment.
+זין
+בזין
+זונה
+זונות
+הזונה
+והזונה
+בזונה
+לזונה
+שהזונה
+זיון
+זיונים
+לזיון
+לזיין
+מזיין
+זוין
+זיינתי
+זיינת
+מזדיין
+מזדיינת
+מזדיינים
+מזדיינות
+תזדיין
+תזדייני
+הזדיין
+הזדיינו
+נזדיין
+שרמוטה
+שרמוטות
+חרא
+החרא
+וחרא
+בחרא
+לחרא
+חרבון
+חרבנתי
+מחרבן
+לחרבן
+מחורבן
+כוסית
+כוסיות
+זובי
+ציצים
+פות
+פותה
+מניאק
+מניאקים
+שמוק
+שמוקים
+כושי
+כושים
+קוקסינל
+קוקסינלים
