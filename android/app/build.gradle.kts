@@ -20,6 +20,10 @@ plugins {
 // The Flutter Gradle plugin cannot be left out of one product flavor only, so the edition is
 // chosen by the `ztOffline` Gradle property and each build has exactly one flavor.
 val ztOffline = providers.gradleProperty("ztOffline").isPresent
+// The Google Play bundle is built with -PztPlay (`flutter build appbundle --android-project-arg=ztPlay=true`).
+// It leaves out READ_SMS: Play allows that permission only for default SMS apps, so the
+// one-time code suggestion from text messages is in the GitHub builds only.
+val ztPlay = providers.gradleProperty("ztPlay").isPresent
 if (!ztOffline) {
     // Must come after the Android and Kotlin plugins.
     apply(plugin = "dev.flutter.flutter-gradle-plugin")
@@ -217,4 +221,10 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.16.1")
     testImplementation("androidx.test:runner:1.7.0")
     testImplementation("androidx.test:core:1.7.0")
+}
+
+androidComponents {
+    onVariants { variant ->
+        if (!ztPlay) variant.sources.manifests.addStaticManifestFile("src/sms/AndroidManifest.xml")
+    }
 }
