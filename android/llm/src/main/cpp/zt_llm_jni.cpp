@@ -102,7 +102,9 @@ Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_allow(JNIEnv *, jclass, jlong h
 // Continues the prompt (UTF-8, may hold the model's special tokens) with up to maxTokens
 // tokens, always taking the most likely one. Stops at the end of the answer, or at a line
 // break when stopAtNewline. Returns the new text as UTF-8, or null when it failed or was
-// cancelled.
+// cancelled. Without stopAtNewline the caller wants a whole answer (proofreading replaces
+// the person's text with it), so an answer cut off by maxTokens is a failure too: a
+// shortened text must never replace the full one.
 JNIEXPORT jbyteArray JNICALL
 Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_generate(JNIEnv *env, jclass, jlong handle, jbyteArray promptUtf8, jint maxTokens, jboolean stopAtNewline) {
     auto *engine = reinterpret_cast<Engine *>(handle);
@@ -127,13 +129,17 @@ Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_generate(JNIEnv *env, jclass, j
     bool ok = true;
     llama_batch batch = llama_batch_get_one(tokens.data(), count);
     llama_token next = 0;
+    bool ended = false;
     for (int produced = 0; produced < maxTokens; produced++) {
         if (engine->cancelled.load() || llama_decode(engine->context, batch) != 0) {
             ok = false;
             break;
         }
         next = llama_sampler_sample(sampler, engine->context, -1);
-        if (llama_vocab_is_eog(engine->vocab, next)) break;
+        if (llama_vocab_is_eog(engine->vocab, next)) {
+            ended = true;
+            break;
+        }
         char piece[256];
         int n = llama_token_to_piece(engine->vocab, next, piece, sizeof(piece), 0, false);
         if (n < 0) {
@@ -145,6 +151,7 @@ Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_generate(JNIEnv *env, jclass, j
             size_t newline = text.find('\n');
             if (newline != std::string::npos) {
                 out.append(text, 0, newline);
+                ended = true;
                 break;
             }
         }
@@ -153,6 +160,7 @@ Java_dev_sagron_zerotrustkeyboard_lm_LlamaNative_generate(JNIEnv *env, jclass, j
     }
     llama_sampler_free(sampler);
     if (!ok || engine->cancelled.load()) return nullptr;
+    if (!ended && !stopAtNewline) return nullptr;
 
     jbyteArray result = env->NewByteArray(static_cast<jsize>(out.size()));
     if (result != nullptr)
