@@ -133,7 +133,7 @@ class VoiceDownloaderTest {
     }
 
     @Test fun noConnectionLeavesNothingBehind() {
-        val result = VoiceDownloader { _, _ -> null }.download(offer, directory, { false }) {}
+        val result = VoiceDownloader({ _, _ -> null }).download(offer, directory, { false }) {}
         assertEquals(VoiceDownloader.Result.NO_CONNECTION, result)
         assertFalse(target.exists())
     }
