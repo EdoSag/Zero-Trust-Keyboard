@@ -59,6 +59,13 @@ SPDX-License-Identifier: Apache-2.0 AND GPL-3.0-only
                 android:excludeFromRecents="true"
                 android:exported="false" />
 
+        <!-- Opens another Zero-Trust app's pick screen for the "Insert from ZT" key. -->
+        <activity android:name="dev.sagron.zerotrustkeyboard.insert.InsertActivity"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:excludeFromRecents="true"
+                android:taskAffinity=""
+                android:exported="false" />
+
         <activity android:name="helium314.keyboard.settings.SettingsActivity"
                 android:theme="@style/platformActivityTheme"
                 android:icon="@mipmap/ic_launcher"
@@ -148,6 +155,11 @@ SPDX-License-Identifier: Apache-2.0 AND GPL-3.0-only
             <!-- changed to * as it's supposed to help with finding other keyboard apps, see https://github.com/HeliBorg/HeliBoard/issues/1340 -->
             <!--<action android:name="android.view.InputMethod" />-->
             <action android:name="*" />
+        </intent>
+
+        <!-- To find the Zero-Trust apps that can hand a text to the keyboard -->
+        <intent>
+            <action android:name="bz.zerotrust.action.PICK_TEXT" />
         </intent>
 
         <!-- To detect names of installed apps -->

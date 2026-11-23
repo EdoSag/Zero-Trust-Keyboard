@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Mirrors the language models for writing help to the release "language-models" of this
+# repository, where the app downloads them from (Settings > Writing help). What is
+# mirrored is decided by language-models/sources.tsv; every source is checked against the
+# sha256 pinned there. Runs when that folder changes on Dev, and by hand.
+name: Language models
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [Dev]
+    paths:
+      - language-models/**
+      - .github/workflows/language-models.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: language-models
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Fetch and check the models
+        run: bash language-models/mirror.sh language-models/sources.tsv "$RUNNER_TEMP/models"
+
+      - name: Publish to the language-models release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view language-models > /dev/null 2>&1; then
+            gh release create language-models --title "Language models" \
+              --notes-file language-models/README.md --latest=false --target "$GITHUB_SHA"
+          fi
+          gh release upload language-models "$RUNNER_TEMP"/models/*.gguf --clobber
+          # The list last: it only ever names files that are already there.
+          gh release upload language-models "$RUNNER_TEMP/models/language-models.tsv" --clobber

@@ -35,6 +35,14 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # A throwaway database for the release checks below.
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
     steps:
       - uses: actions/checkout@v5
         with:
@@ -118,6 +126,15 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Release checks
+        # Shared by every Zero-Trust app (Zero-Trust-Core,
+        # packages/zt_release_checks): key, sync and sign-in vectors run with
+        # this app's dependencies, app setup, and the database rules of the
+        # pinned core plus every table and function this app calls. A
+        # failure here stops the release.
+        env: { PGHOST: localhost, PGUSER: postgres, PGPASSWORD: postgres }
+        run: dart run zt_release_checks --app keyboard --database
+
       - name: Analyze and test the ZT app
         run: |
           flutter analyze
@@ -126,10 +143,17 @@ jobs:
       - name: Build the full edition APK
         run: |
           set -e
-          flutter build apk --release --flavor full --build-number="$BUILD"
+          flutter build apk --release --flavor full --build-number="$BUILD" --dart-define=ZT_CHANNEL=direct
           APK="$APP_SLUG-$VERSION-build$BUILD.apk"
           cp build/app/outputs/flutter-apk/app-full-release.apk "$APK"
           echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Check the APK can read one-time codes from text messages
+        run: |
+          set -e
+          AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          "$AAPT2" dump permissions "$APK" | grep -q "android.permission.READ_SMS" \
+            || { echo "::error::The APK should ask for READ_SMS (src/sms/AndroidManifest.xml)"; exit 1; }
 
       - name: Build the Google Play bundle
         # Google Play takes an .aab, not an .apk. Built for releases (and
@@ -137,16 +161,36 @@ jobs:
         if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         run: |
           set -e
-          flutter build appbundle --release --flavor full --build-number="$BUILD"
+          # -PztPlay leaves out READ_SMS, which Google Play allows only for SMS apps.
+          flutter build appbundle --release --flavor full --build-number="$BUILD" --android-project-arg=ztPlay=true
           AAB="$APP_SLUG-$VERSION-build$BUILD.aab"
           cp build/app/outputs/bundle/fullRelease/*.aab "$AAB"
           echo "AAB=$AAB" >> "$GITHUB_ENV"
+          if unzip -p "$AAB" base/manifest/AndroidManifest.xml | grep -aq "android.permission.READ_SMS"; then
+            echo "::error::The Google Play bundle must not ask for READ_SMS"; exit 1
+          fi
 
       - name: Keyboard unit tests
         # HeliBoard's own CI variant: skips tests known to fail upstream.
         if: github.event_name == 'pull_request'
         working-directory: android
         run: ./gradlew --no-daemon -PztOffline :app:testOfflineRunTestsUnitTest
+
+      - name: Check the Google Play build leaves out READ_SMS
+        if: github.event_name == 'pull_request'
+        working-directory: android
+        run: |
+          set -e
+          ./gradlew --no-daemon -q -PztOffline -PztPlay :app:processOfflineReleaseManifest
+          # The Flutter project moves the build folder to build/app at the repository root.
+          MERGED=$(find ../build/app/intermediates -path "*merged_manifest*" -path "*offlineRelease*" -name AndroidManifest.xml | head -1)
+          test -n "$MERGED" || { echo "::error::No merged manifest found"; exit 1; }
+          echo "Checking $MERGED"
+          if grep -q "android.permission.READ_SMS" "$MERGED"; then
+            echo "::error::-PztPlay builds must not ask for READ_SMS"; exit 1
+          fi
+          grep -q "android.permission.RECORD_AUDIO" "$MERGED"
+          rm -f "$MERGED"
 
       - name: Build the Offline edition APK
         run: |

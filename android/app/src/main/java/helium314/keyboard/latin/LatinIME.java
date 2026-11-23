@@ -25,6 +25,7 @@ import android.os.Process;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.CompletionInfo;
@@ -148,6 +149,52 @@ public class LatinIME extends InputMethodService implements
     private final dev.sagron.zerotrustkeyboard.voice.VoiceTyping mVoiceTyping =
             new dev.sagron.zerotrustkeyboard.voice.VoiceTyping(this);
     public dev.sagron.zerotrustkeyboard.voice.VoiceTyping getVoiceTyping() { return mVoiceTyping; }
+    private final dev.sagron.zerotrustkeyboard.translate.TranslateTyping mTranslateTyping =
+            new dev.sagron.zerotrustkeyboard.translate.TranslateTyping(this);
+    // ZT Keyboard: offers a one-time code that arrives by text message while a field is open.
+    private final dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher mSmsCodeWatcher =
+            new dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher(this, this::onTextMessageArrived);
+    public dev.sagron.zerotrustkeyboard.translate.TranslateTyping getTranslateTyping() { return mTranslateTyping; }
+    // ZT Keyboard: finish my sentence, with the language model on the phone.
+    private final dev.sagron.zerotrustkeyboard.lm.SentenceCompletion mSentenceCompletion =
+            new dev.sagron.zerotrustkeyboard.lm.SentenceCompletion(this);
+
+    /** ZT Keyboard: shows a chip (a code, the end of a sentence) in place of the suggestions. */
+    public void ztShowSuggestionChip(@Nullable final View chip) {
+        if (chip != null && hasSuggestionStripView()) mSuggestionStripView.setExternalSuggestionView(chip, false);
+    }
+
+    // ZT Keyboard: the text field shows an autofill suggestion, so no code chip of our own.
+    private boolean mZtAutofillShown = false;
+
+    /** ZT Keyboard: the language model is needed for something else (proofreading). */
+    public void ztCancelSentenceCompletion() {
+        mSentenceCompletion.cancel();
+    }
+
+    /** ZT Keyboard: the suggestion strip, as the parent for a chip's layout. */
+    @Nullable
+    public android.view.ViewGroup ztSuggestionStrip() {
+        return hasSuggestionStripView() ? mSuggestionStripView : null;
+    }
+
+    /** ZT Keyboard: lets the word being typed stand as it is, so the text field holds everything written. */
+    public void ztFinishWord() {
+        mInputLogic.finishInput();
+    }
+
+    /** ZT Keyboard: where the keyboard takes the selection (or the cursor) to be: start and end. */
+    public int[] ztSelection() {
+        return new int[] { mInputLogic.mConnection.getExpectedSelectionStart(),
+                mInputLogic.mConnection.getExpectedSelectionEnd() };
+    }
+
+    /** ZT Keyboard: puts {@code text} in place of what is between two positions of the text field. */
+    public void ztReplaceText(final int start, final int end, final String text) {
+        mInputLogic.finishInput();
+        mInputLogic.mConnection.setSelection(start, end);
+        onTextInput(text);
+    }
     private final SubtypeState mSubtypeState = new SubtypeState((InputMethodSubtype subtype) -> { switchToSubtype(subtype); return Unit.INSTANCE; });
     private final StatsUtilsManager mStatsUtilsManager;
     // Working variable for {@link #startShowingInputView()} and
@@ -709,6 +756,8 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onDestroy() {
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
+        dev.sagron.zerotrustkeyboard.translate.TranslateEngine.INSTANCE.stop();
         dev.sagron.zerotrustkeyboard.voice.VoiceEngine.INSTANCE.release();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
@@ -858,6 +907,8 @@ public class LatinIME extends InputMethodService implements
 
     private void onStartInputInternal(EditorInfo editorInfo, boolean restarting) {
         super.onStartInput(editorInfo, restarting);
+        // ZT Keyboard: a new text field has no autofill suggestion yet.
+        if (!restarting) mZtAutofillShown = false;
 
         RichInputMethodSubtype subtypeForApp = editorInfo == null
             ? null :
@@ -1020,6 +1071,18 @@ public class LatinIME extends InputMethodService implements
                 currentSettingsValues.mGestureFloatingPreviewTextEnabled);
 
         if (TRACE) Debug.startMethodTracing("/data/trace/latinime");
+
+        // ZT Keyboard: a text picked in another Zero-Trust app is typed once the keyboard is
+        // back in the text field that asked for it.
+        final String picked = dev.sagron.zerotrustkeyboard.insert.InsertHandOver.INSTANCE.take(
+                editorInfo == null ? null : editorInfo.packageName,
+                editorInfo == null ? 0 : editorInfo.fieldId, android.os.SystemClock.elapsedRealtime(),
+                System.currentTimeMillis());
+        if (picked != null && !mSettings.getCurrent().mIsLocked)
+            mHandler.post(() -> onTextInput(picked));
+
+        if (mSettings.getCurrent().mZtSmsCodes) mSmsCodeWatcher.start();
+        else mSmsCodeWatcher.stop();
     }
 
     @Override
@@ -1037,6 +1100,7 @@ public class LatinIME extends InputMethodService implements
     public void onWindowHidden() {
         super.onWindowHidden();
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
         Log.i(TAG, "onWindowHidden");
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
@@ -1059,6 +1123,9 @@ public class LatinIME extends InputMethodService implements
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         mVoiceTyping.cancel();
+        mTranslateTyping.cancel();
+        mSmsCodeWatcher.stop();
+        mSentenceCompletion.cancel();
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
     }
@@ -1343,6 +1410,7 @@ public class LatinIME extends InputMethodService implements
             return false;
         }
 
+        mZtAutofillShown = true;
         final View inlineSuggestionView = InlineAutofillUtils.createView(inlineSuggestions, mDisplayContext);
 
         // Without this function the inline autofill suggestions will not be visible
@@ -1435,6 +1503,7 @@ public class LatinIME extends InputMethodService implements
     // This method is public for testability of LatinIME, but also in the future it should
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
+        mTranslateTyping.onOtherInput();
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
             // ZT Keyboard's own voice typing, on the device (HeliBoard switched to another keyboard here).
             mVoiceTyping.onVoiceKey();
@@ -1449,6 +1518,7 @@ public class LatinIME extends InputMethodService implements
 
     public void onTextInput(@Nullable String rawText) {
         if (rawText == null) return;
+        mTranslateTyping.onOtherInput();
         // TODO: have the keyboard pass the correct key code when we need it.
         Event event = Event.createSoftwareTextEvent(rawText, KeyCode.MULTIPLE_CODE_POINTS, null);
         InputTransaction completeInputTransaction = mInputLogic.onTextInput(mSettings.getCurrent(),
@@ -1459,6 +1529,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     public void onStartBatchInput() {
+        mTranslateTyping.onOtherInput();
         mInputLogic.onStartBatchInput(mSettings.getCurrent(), mKeyboardSwitcher, mHandler);
         mGestureConsumer.onGestureStarted(mRichImm.getCurrentSubtypeLocale(), mKeyboardSwitcher.getKeyboard());
     }
@@ -1575,12 +1646,39 @@ public class LatinIME extends InputMethodService implements
      */
     public boolean tryShowClipboardSuggestion() {
         if (!hasSuggestionStripView()) return false;
+        // ZT Keyboard: a one-time code from a recent text message comes first.
+        final View codeView = dev.sagron.zerotrustkeyboard.otp.SmsCodeSuggestion.INSTANCE.view(
+                this, getCurrentInputEditorInfo(), mSuggestionStripView, isTextFieldEmpty());
+        if (codeView != null) {
+            mSuggestionStripView.setExternalSuggestionView(codeView, false);
+            return true;
+        }
+        // ZT Keyboard: then a code from ZT Authenticator, on fields that ask for one.
+        final View authenticatorView = dev.sagron.zerotrustkeyboard.otp.AuthenticatorCodeSuggestion.INSTANCE.view(
+                this, getCurrentInputEditorInfo(), mSuggestionStripView, isTextFieldEmpty(), mZtAutofillShown);
+        if (authenticatorView != null) {
+            mSuggestionStripView.setExternalSuggestionView(authenticatorView, false);
+            return true;
+        }
         View clipboardView = mClipboardHistoryManager.getClipboardSuggestionView(getCurrentInputEditorInfo(), mSuggestionStripView);
         if (clipboardView != null) {
             mSuggestionStripView.setExternalSuggestionView(clipboardView, false);
             return true;
         }
         return false;
+    }
+
+    private boolean isTextFieldEmpty() {
+        return mInputLogic.mConnection.getCodePointBeforeCursor() == Constants.NOT_A_CODE
+                && TextUtils.isEmpty(mInputLogic.mConnection.getTextAfterCursor(1, 0));
+    }
+
+    /** A text message arrived while the keyboard is open: offer its code if it fits here. */
+    private void onTextMessageArrived() {
+        if (!hasSuggestionStripView() || !isInputViewShown()) return;
+        if (!dev.sagron.zerotrustkeyboard.otp.SmsCodeSuggestion.INSTANCE.fits(getCurrentInputEditorInfo(), isTextFieldEmpty()))
+            return;
+        setNeutralSuggestionStrip();
     }
 
     // This will first try showing a clipboard suggestion. On success, the toolbar will be hidden
@@ -1618,6 +1716,8 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void removeExternalSuggestions() {
+        // ZT Keyboard: a closed autofill suggestion no longer stands in for the code chip.
+        mZtAutofillShown = false;
         setNeutralSuggestionStrip();
         mHandler.postResumeSuggestions(false);
     }
@@ -1665,6 +1765,7 @@ public class LatinIME extends InputMethodService implements
         if (inputTransaction.didAffectContents()) {
             mSubtypeState.setCurrentSubtypeHasBeenUsed();
         }
+        mSentenceCompletion.onInput();
     }
 
     public void hapticAndAudioFeedback(final int code, final int repeatCount,

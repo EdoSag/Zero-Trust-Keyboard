@@ -17,6 +17,7 @@ fastlane/Appfile
 *.diff
 *.sh
 !/voice-models/mirror.sh
+!/language-models/mirror.sh
 
 # Flutter/Dart (the ZT app around the keyboard, full edition)
 .dart_tool/
@@ -34,3 +35,5 @@ app.*.map.json
 
 # Supabase client settings; CI writes its own.
 .env
+# Written and removed by `dart run zt_release_checks`; never committed.
+/test/zt_release_checks_test.dart

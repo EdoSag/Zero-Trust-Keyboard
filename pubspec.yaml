@@ -1,7 +1,7 @@
 name: zerotrust_keyboard
 description: "Zero-Trust Keyboard: a private keyboard. Everything you type stays on your phone."
 publish_to: none
-version: 0.5.0+10
+version: 0.11.0+23
 
 environment:
   sdk: ^3.9.0
@@ -26,9 +26,11 @@ dependencies:
     git:
       url: https://github.com/EdoSag/Zero-Trust-Core.git
       path: packages/zero_trust_core
-      ref: cd50d2ddfeb18abb25687b9f956478d7ced83aae
+      ref: v1.0.1
   flutter_riverpod: ^3.5.0
   supabase_flutter: ^2.9.0
+  # Hashes that stand for pinned clips in the list of what was synced.
+  crypto: ^3.0.6
   # Random ids for synced items.
   uuid: ^4.5.0
   # Reset links from account emails (EmailLinks).
@@ -38,6 +40,13 @@ dependencies:
   url_launcher: ^6.3.1
 
 dev_dependencies:
+  # Release checks every Zero-Trust app runs in CI (keys, sync, sign-in, app
+  # setup, database). Independent of zero_trust_core, so it may be newer.
+  zt_release_checks:
+    git:
+      url: https://github.com/EdoSag/Zero-Trust-Core.git
+      path: packages/zt_release_checks
+      ref: v1.0.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0

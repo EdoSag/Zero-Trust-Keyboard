@@ -124,6 +124,22 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 }
                 return
             }
+            KeyCode.TRANSLATE -> {
+                // ZT Keyboard: on-device translation of the text in the field.
+                if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onTranslateKey()
+                return
+            }
+            KeyCode.ZT_PROOFREAD -> {
+                // ZT Keyboard: spelling and grammar, with the language model on the phone.
+                if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onProofreadKey()
+                return
+            }
+            KeyCode.ZT_INSERT -> {
+                // ZT Keyboard: pick a text in another Zero-Trust app and type it here.
+                if (!(Settings.getValues().mIsLocked))
+                    dev.sagron.zerotrustkeyboard.insert.InsertActivity.start(latinIME, latinIME.currentInputEditorInfo)
+                return
+            }
             KeyCode.BACKGROUND_GATHERING_TEMP_OFF -> {
                 GestureDataGatheringSettings.tempDisableBackgroundGathering(latinIME.prefs())
                 BackgroundGatheringCache.clear()

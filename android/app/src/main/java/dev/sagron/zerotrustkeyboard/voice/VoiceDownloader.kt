@@ -12,7 +12,13 @@ import java.security.MessageDigest
  * was; the finished file must have the size and the sha256 from the list before it is
  * accepted. The connection itself comes from [open], so this class has no network code.
  */
-class VoiceDownloader(private val open: (url: String, from: Long) -> Source?) {
+class VoiceDownloader(
+    private val open: (url: String, from: Long) -> Source?,
+    /** Where the files are: the release of the speech models, or another release of the keyboard. */
+    private val baseUrl: String = VoiceCatalog.BASE_URL,
+    /** Whether the first bytes of a finished file look like a model of the expected kind. */
+    private val isModelHeader: (ByteArray, Int) -> Boolean = VoiceModels::isModelHeader,
+) {
 
     /** An open download. [startsAt] is the first byte the server sends: [from] if it can continue, else 0. */
     class Source(val stream: InputStream, val startsAt: Long)
@@ -36,7 +42,7 @@ class VoiceDownloader(private val open: (url: String, from: Long) -> Source?) {
             if (directory.usableSpace < offer.bytes - have + SPARE_BYTES) return Result.NO_SPACE
             onProgress(have)
             if (have < offer.bytes) {
-                val source = open(VoiceCatalog.BASE_URL + offer.file, have) ?: return Result.NO_CONNECTION
+                val source = open(baseUrl + offer.file, have) ?: return Result.NO_CONNECTION
                 source.stream.use { input ->
                     if (source.startsAt != have) {
                         // The server started over (or somewhere else): so do we.
@@ -85,7 +91,7 @@ class VoiceDownloader(private val open: (url: String, from: Long) -> Source?) {
     private fun startsLikeAModel(file: File): Boolean {
         val head = ByteArray(4)
         val count = file.inputStream().use { it.read(head) }
-        return VoiceModels.isModelHeader(head, count)
+        return isModelHeader(head, count)
     }
 
     companion object {

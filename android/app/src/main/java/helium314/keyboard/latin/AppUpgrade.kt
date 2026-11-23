@@ -57,7 +57,29 @@ fun checkVersionUpgrade(context: Context) {
     val oldVersion = prefs.getInt(Settings.PREF_VERSION_CODE, 0)
     if (oldVersion != BuildConfig.UPSTREAM_VERSION_CODE)
         AppUpgrade.onUpgrade(context)
+    refreshBundledDictionaries(context)
 }
+
+/**
+ * ZT Keyboard: the dictionaries that come with the app are copied out of it on first use and
+ * the copy is what the keyboard reads. Upstream throws the copies away when its own version
+ * code changes, but ours stays the same from one ZT release to the next, so a release with a
+ * better dictionary would keep reading the old copy. Throw them away whenever our version
+ * changes; they are copied out again when next needed. Dictionaries the user added stay.
+ */
+private fun refreshBundledDictionaries(context: Context) {
+    val prefs = context.prefs()
+    if (prefs.getInt(PREF_ZT_BUNDLED_DICTIONARIES_VERSION, 0) == BuildConfig.VERSION_CODE) return
+    DictionaryInfoUtils.getCacheDirectories(context).forEach { directory ->
+        directory.listFiles()?.forEach { if (!it.name.endsWith(USER_DICTIONARY_SUFFIX)) it.delete() }
+    }
+    // A ZT release can add a toolbar key (Translate, Insert from ZT): saved toolbars learn about it, switched off.
+    upgradeToolbarPrefs(prefs)
+    prefs.edit { putInt(PREF_ZT_BUNDLED_DICTIONARIES_VERSION, BuildConfig.VERSION_CODE) }
+}
+
+/** The app version whose bundled dictionaries are the ones copied out on this phone. */
+const val PREF_ZT_BUNDLED_DICTIONARIES_VERSION = "zt_bundled_dictionaries_version"
 
 fun transferOldPinnedClips(context: Context) {
     @Serializable

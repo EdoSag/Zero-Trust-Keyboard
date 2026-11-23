@@ -144,6 +144,8 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_GESTURE_TRAIL_FADEOUT_DURATION = "gesture_trail_fadeout_duration";
     public static final String PREF_SHOW_SETUP_WIZARD_ICON = "show_setup_wizard_icon";
     public static final String PREF_USE_CONTACTS = "use_contacts";
+    // ZT Keyboard: one-time codes from text messages (dev.sagron.zerotrustkeyboard.otp)
+    public static final String PREF_ZT_SMS_CODES = "zt_sms_codes";
     public static final String PREF_USE_APPS = "use_apps";
     public static final String PREFS_LONG_PRESS_SYMBOLS_FOR_NUMPAD = "long_press_symbols_for_numpad";
 

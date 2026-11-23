@@ -1365,4 +1365,92 @@ New dictionary:
     <string name="zt_voice_download_damaged">The downloaded file was damaged and was removed. Tap the model to try again.</string>
     <string name="zt_voice_download_no_space">Not enough free space on the phone</string>
     <string name="zt_voice_download_failed">The download failed</string>
+
+    <!-- ZT Keyboard: translate on the phone -->
+    <string name="translate" tools:keep="@string/translate">Translate</string>
+    <!-- ZT Keyboard: toolbar key that types a text picked in another Zero-Trust app -->
+    <string name="zt_insert" tools:keep="@string/zt_insert">Insert from ZT apps</string>
+    <string name="zt_insert_title">Insert from</string>
+    <string name="zt_insert_no_apps">No Zero-Trust app on this phone can insert text yet. Update ZT Contacts, ZT Notes or ZT Calendar.</string>
+    <string name="zt_insert_failed">Could not open that app.</string>
+    <string name="zt_insert_too_late">That took too long. Press the insert key again.</string>
+    <string name="zt_translate_title">Translate</string>
+    <string name="zt_translate_intro">Write in one language, press the Translate key in the toolbar, and what you wrote is replaced by its translation. Select part of the text to translate only that part. The translation is worked out on this phone, so what you write never leaves it. Each language is downloaded once.</string>
+    <string name="zt_translate_not_in_edition">Translating is not part of the Offline edition, which cannot download languages.</string>
+    <string name="zt_translate_languages">Translate between</string>
+    <string name="zt_translate_mine">I write in</string>
+    <string name="zt_translate_other">Translate to</string>
+    <string name="zt_translate_pair_missing">To translate between %1$s and %2$s, download the languages below. English needs no download.</string>
+    <string name="zt_translate_on_phone">Languages on this phone</string>
+    <string name="zt_translate_none_on_phone">No language yet. Download one below.</string>
+    <string name="zt_translate_size">%d MB</string>
+    <string name="zt_translate_download">Download a language</string>
+    <string name="zt_translate_show_downloads">Show the languages</string>
+    <string name="zt_translate_show_downloads_summary">Fetches the list of languages from the ZT Browser releases on GitHub</string>
+    <string name="zt_translate_list_loading">Fetching the list…</string>
+    <string name="zt_translate_list_failed">The list could not be fetched. Tap to try again.</string>
+    <string name="zt_translate_downloading">Downloading: %1$d of %2$d MB</string>
+    <string name="zt_translate_download_confirm">Download %1$s (%2$d MB)?</string>
+    <string name="zt_translate_delete_confirm">Remove %s from this phone?</string>
+    <string name="zt_translate_download_stopped">The download stopped. Tap the language to try again.</string>
+    <string name="zt_translate_download_damaged">The downloaded file was not the expected one and was removed. Tap the language to try again.</string>
+    <string name="zt_translate_download_no_space">Not enough free space on the phone</string>
+    <string name="zt_translate_download_failed">The download failed</string>
+    <string name="zt_translate_from_to">%1$s → %2$s</string>
+    <string name="zt_translate_working">Translating %s…</string>
+    <string name="zt_translate_working_time">Translating %1$s… %2$d s</string>
+    <string name="zt_translate_cancel">Cancel</string>
+    <string name="zt_translate_undo">Undo</string>
+    <string name="zt_translate_done">Done</string>
+    <string name="zt_translate_nothing">Nothing to translate</string>
+    <string name="zt_translate_too_long">That is too long to translate at once. Select a part of it.</string>
+    <string name="zt_translate_not_here">Passwords are not translated</string>
+    <string name="zt_translate_needs_languages">Download the languages to translate first</string>
+    <string name="zt_translate_failed">The translation failed, please try again</string>
+    <string name="zt_translate_text_changed">The text changed, so it was not translated</string>
+    <!-- ZT Keyboard: one-time codes from text messages -->
+    <string name="zt_sms_codes">Suggest codes from text messages</string>
+    <string name="zt_sms_codes_summary">Offer a one-time code from a message that arrived in the last 10 minutes. The messages are read on this phone only, and nothing is kept.</string>
+    <string name="zt_sms_code_spoken">Type the code %s from a text message</string>
+    <string name="zt_sms_code_dismiss">Dismiss the code</string>
+    <string name="zt_authenticator_code">Code from %s</string>
+    <string name="zt_authenticator_code_dismiss">Hide the code button for this field</string>
+    <string name="zt_proofread" tools:keep="@string/zt_proofread">Proofread</string>
+    <string name="zt_proofread_working">Proofreading…</string>
+    <string name="zt_proofread_working_time">Proofreading… %d s</string>
+    <string name="zt_proofread_done">Proofread</string>
+    <string name="zt_proofread_nothing">Nothing to proofread</string>
+    <string name="zt_proofread_nothing_to_fix">No mistakes found</string>
+    <string name="zt_proofread_too_long">That is too long to proofread at once. Select a part of it.</string>
+    <string name="zt_proofread_not_here">Passwords are not proofread</string>
+    <string name="zt_proofread_needs_model">Download the language model for writing help first</string>
+    <string name="zt_proofread_failed">Proofreading failed, please try again</string>
+    <string name="zt_writing_title">Writing help</string>
+    <string name="zt_writing_intro">A small language model on this phone can check spelling and grammar when you press the Proofread key (turn it on in Settings, Toolbar), and can offer the next few words while you type. It works best in English. It runs on this phone, so what you write never leaves it. The model is downloaded once (about 400 MB).</string>
+    <string name="zt_writing_not_in_build">Writing help is not part of this build.</string>
+    <string name="zt_writing_finish">Finish my sentence</string>
+    <string name="zt_writing_finish_summary">Offers the next few words above the keyboard while you type. Tap them to add them. Uses more battery.</string>
+    <string name="zt_writing_finish_spoken">Add: %s</string>
+    <string name="zt_writing_finish_dismiss">Dismiss the suggestion</string>
+    <string name="zt_writing_model">Language model on this phone</string>
+    <string name="zt_writing_no_model">No model yet. Download one below, or add one from a file.</string>
+    <string name="zt_writing_size">%d MB</string>
+    <string name="zt_writing_download">Download a model</string>
+    <string name="zt_writing_show_downloads">Show the models</string>
+    <string name="zt_writing_show_downloads_summary">Fetches the list of models from the ZT Keyboard releases on GitHub</string>
+    <string name="zt_writing_list_loading">Fetching the list…</string>
+    <string name="zt_writing_list_failed">The list could not be fetched. Tap to try again.</string>
+    <string name="zt_writing_downloading">Downloading: %1$d of %2$d MB</string>
+    <string name="zt_writing_download_confirm">Download %1$s (%2$d MB)?</string>
+    <string name="zt_writing_delete_confirm">Remove the language model from this phone?</string>
+    <string name="zt_writing_download_stopped">The download stopped. Tap the model to try again.</string>
+    <string name="zt_writing_download_damaged">The downloaded file was not the expected one and was removed. Tap the model to try again.</string>
+    <string name="zt_writing_download_no_space">Not enough free space on the phone</string>
+    <string name="zt_writing_download_failed">The download failed</string>
+    <string name="zt_writing_add_file">Add a model from a file</string>
+    <string name="zt_writing_add_file_summary">A language model in GGUF format, made for chat (instruct)</string>
+    <string name="zt_writing_copying">Copying… %1$d MB</string>
+    <string name="zt_writing_not_a_model">This file is not a language model in GGUF format</string>
+    <string name="zt_writing_copy_failed">The file could not be copied</string>
+    <string name="zt_writing_privacy">Writing help is never used in password fields, in incognito mode or while the phone is locked.</string>
 </resources>

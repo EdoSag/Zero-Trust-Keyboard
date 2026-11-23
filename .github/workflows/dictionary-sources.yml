@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Counts Hebrew word pairs (which word follows which) in Hebrew Wikipedia and publishes
+# the counts to the release "dictionary-sources" of this repository. The dictionary
+# builder (dictionaries/build_zt_hebrew.py) reads them from there, checked by the sha256
+# written in dictionaries/README.md. Wikipedia is too large to keep in this repository
+# and cannot be reached from where the dictionary is built, so the counting runs here.
+# The Wikipedia files are the Hebrew part of the Wikimedia "wikipedia" dataset at the
+# revision named below; the sha256 of every file is written to the release next to the
+# counts.
+name: Dictionary sources
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - dictionaries/count_hebrew_pairs.py
+      - .github/workflows/dictionary-sources.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dictionary-sources
+  cancel-in-progress: false
+
+env:
+  WIKI_REPO: wikimedia/wikipedia
+  WIKI_CONFIG: 20231101.he
+  WIKI_REVISION: main
+
+jobs:
+  pairs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install the readers
+        run: pip install --no-cache-dir "numpy==2.3.4" "pyarrow==21.0.0" "huggingface_hub==0.36.0"
+
+      - name: Fetch Hebrew Wikipedia
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, os, pathlib
+          from huggingface_hub import HfApi, snapshot_download
+          repo, config, revision = os.environ["WIKI_REPO"], os.environ["WIKI_CONFIG"], os.environ["WIKI_REVISION"]
+          sha = HfApi().dataset_info(repo, revision=revision).sha
+          path = snapshot_download(repo, repo_type="dataset", revision=sha, allow_patterns=[config + "/*.parquet"],
+                                   local_dir=os.environ["RUNNER_TEMP"] + "/wiki")
+          files = sorted(pathlib.Path(path, config).glob("*.parquet"))
+          assert files, "no Parquet files"
+          with open(os.environ["RUNNER_TEMP"] + "/he_wiki_pairs.sources.txt", "w") as out:
+              out.write("dataset %s config %s revision %s\n" % (repo, config, sha))
+              for f in files:
+                  out.write("%s  %s\n" % (hashlib.sha256(f.read_bytes()).hexdigest(), f.name))
+          PY
+          cat "$RUNNER_TEMP/he_wiki_pairs.sources.txt"
+
+      - name: Count the word pairs
+        run: |
+          set -euo pipefail
+          python dictionaries/count_hebrew_pairs.py dictionaries/he_zt_wordlist.combined.gz \
+            "$RUNNER_TEMP/wiki/$WIKI_CONFIG" "$RUNNER_TEMP/he_wiki_pairs.tsv.gz"
+          sha256sum "$RUNNER_TEMP/he_wiki_pairs.tsv.gz" | tee -a "$RUNNER_TEMP/he_wiki_pairs.sources.txt"
+          echo "counted by $GITHUB_SHA" >> "$RUNNER_TEMP/he_wiki_pairs.sources.txt"
+
+      - name: Publish to the dictionary-sources release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view dictionary-sources > /dev/null 2>&1; then
+            gh release create dictionary-sources --title "Dictionary sources" \
+              --notes "Inputs for the bundled dictionaries that are too large for the repository. See dictionaries/README.md." \
+              --latest=false --target "$GITHUB_SHA"
+          fi
+          gh release upload dictionary-sources "$RUNNER_TEMP/he_wiki_pairs.tsv.gz" "$RUNNER_TEMP/he_wiki_pairs.sources.txt" --clobber

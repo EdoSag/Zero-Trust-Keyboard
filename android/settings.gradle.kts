@@ -35,6 +35,8 @@ plugins {
 include(":app")
 // whisper.cpp for voice typing, native code only.
 include(":whisper")
+// llama.cpp for writing help (finish my sentence, proofread), native code only.
+include(":llm")
 if (!providers.gradleProperty("ztOffline").isPresent) {
     apply(plugin = "dev.flutter.flutter-plugin-loader")
 }

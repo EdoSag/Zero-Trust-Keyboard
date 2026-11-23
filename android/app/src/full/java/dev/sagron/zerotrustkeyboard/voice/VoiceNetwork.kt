@@ -6,15 +6,19 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * The full edition's connection for downloading speech models. The only addresses asked
- * for are the model list and the model files of the keyboard's own releases on GitHub.
+ * The full edition's connection for downloading models (speech, and the language model for
+ * writing help). The only addresses asked for are the model lists and the model files of
+ * the keyboard's own releases on GitHub.
  */
 object VoiceNetwork {
     val available: Boolean = true
 
+    /** Every address asked for starts with this: a release of the keyboard's own repository. */
+    private const val RELEASES = "https://github.com/EdoSag/Zero-Trust-Keyboard/releases/download/"
+
     /** Opens [url] from byte [from], or returns null when there is no usable answer. */
     fun open(url: String, from: Long): VoiceDownloader.Source? {
-        if (!url.startsWith(VoiceCatalog.BASE_URL)) return null
+        if (!url.startsWith(RELEASES)) return null
         var connection: HttpURLConnection? = null
         try {
             connection = URL(url).openConnection() as HttpURLConnection

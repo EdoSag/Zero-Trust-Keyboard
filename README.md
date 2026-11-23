@@ -11,13 +11,28 @@ Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-d
 typing, on-device translation, and optional end-to-end encrypted sync of your personal
 dictionary through your Zero-Trust account.
 
-The Hebrew dictionary (94,799 words) is built from the Android Open Source Project's Hebrew
-word list, see [dictionaries/README.md](dictionaries/README.md).
+The Hebrew dictionary (181,813 words) is our own "ZT Hebrew" list: the Android Open Source
+Project's Hebrew word list, widened with the words people really use (from OpenSubtitles
+counts) that the Hspell speller accepts. Sources, licences and how it is built are in
+[dictionaries/README.md](dictionaries/README.md).
+
+Emoji search and emoji names work in Hebrew and English with nothing to download: type
+כלב or dog in the emoji search, or just in a message, and the emoji is offered. The words
+come from Unicode CLDR.
 
 Signed in, you can turn on **Sync my personal dictionary** in the ZT Keyboard app: the words and
 shortcuts you added are kept the same on every phone of the account, end-to-end encrypted. It is
 off until you turn it on, and it runs while the app is open and unlocked, because the keyboard
 itself never holds the account's key.
+
+**Codes from text messages**: when a one-time code arrives by SMS ("Your code is 482913",
+"קוד האימות שלך: 482913"), the keyboard offers it as a chip in the suggestion strip, in a
+number field or an empty one-line field, for 10 minutes. One tap types it. Turn it on under
+Settings > Text correction > Suggest codes from text messages; the keyboard then asks for
+permission to read text messages. The messages are read on the phone only and nothing is
+kept. Android 15 hides these codes from notification readers, so reading the messages is the
+only way. Google Play allows that permission only for SMS apps, so this is in the GitHub
+builds only; the Play build leaves the permission and the setting out.
 
 ## Two editions
 
@@ -27,6 +42,8 @@ itself never holds the account's key.
 | The keyboard | yes | yes, the same one |
 | ZT app around it (setup, optional Zero-Trust account, app lock, shared settings) | yes | no |
 | `INTERNET` permission | yes, for the account only | **no** |
+| `READ_SMS` permission (codes from text messages, off until turned on) | yes, GitHub build only | yes |
+| Writing help language model | downloaded in settings | added from a file |
 | Launcher icon opens | the ZT app | the keyboard's settings |
 
 The keyboard is a native Android service (`android/`, Kotlin/Java/C++). The ZT app is Flutter
@@ -75,6 +92,54 @@ every download against the published list. A model whose name ends in a language
 `.he.bin`, is tuned for that language and is used whenever the keyboard is in it: for Hebrew
 that is the ivrit.ai model.
 
+Translating (phase K5) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/translate/`.
+The Translate key in the toolbar replaces what is written in the text field (or the selected
+part) with its translation, between the two languages chosen in Settings > Translate, and
+offers Undo. Hebrew and English are told apart by the letters; two languages with the same
+letters follow the language the keyboard is in.
+
+The engine is the one ZT Browser uses: Firefox's Bergamot (MPL-2.0, in
+`android/app/src/full/assets/translate`), run in a hidden WebView whose every request is
+answered by the keyboard itself from its own files, so it has no way to the network and the
+text never leaves the phone. The language models are Mozilla's Firefox Translations models,
+downloaded per language in Settings > Translate from ZT Browser's `translation-models`
+release. The list there is signed (Ed25519); the keyboard checks the signature and then each
+file's size and sha256 before using it. The Offline edition has no Translate key: it cannot
+download a language.
+
+Inserts from other Zero-Trust apps (phase K6) are in
+`android/app/src/main/java/dev/sagron/zerotrustkeyboard/insert/`. The "Insert from ZT apps"
+toolbar key (off by default, switch it on in Settings > Toolbar) opens another Zero-Trust
+app's own pick screen with the intent action `bz.zerotrust.action.PICK_TEXT`. The user
+unlocks that app as usual, picks a value, and the app answers with only that text in the
+extra `bz.zerotrust.extra.TEXT`. The keyboard types it when it is back in the text field
+that asked, within two minutes, and never anywhere else. The keyboard never reads another
+app's data. Both sides check that the other app is signed with the same key
+(`PackageManager.checkSignatures`), so no other app can offer itself to the keyboard or ask
+a Zero-Trust app for a value. The key does nothing while the phone is locked.
+
+One-time codes from ZT Authenticator come the same way. On a field that asks for a code (a
+numeric password field, or a hint or label like "code" or "verification"), the strip shows
+"Code from ZT Authenticator" when that app is on the phone and signed with our key. A tap
+opens it with the category `bz.zerotrust.category.ONE_TIME_CODE` and the extra
+`bz.zerotrust.extra.FOR_PACKAGE` (the app of the text field), so it can pick the account.
+The code it hands back is typed in that field only, without being learned or put on the
+clipboard, and is dropped once `bz.zerotrust.extra.VALID_UNTIL` has passed. The chip stays
+away when the field already shows an autofill suggestion.
+
+Writing help (phase K6) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/lm/`
+with the engine in `android/llm/`: llama.cpp (MIT), fetched by CMake at a pinned release tag
+and sha256 and built into `libzt_llm.so`. It needs a small language model in GGUF format,
+downloaded once in Settings > Writing help (or added from a file in the Offline edition):
+Qwen2.5 0.5B Instruct (Apache-2.0, about 400 MB), mirrored to the `language-models` release
+of this repository by the "Language models" workflow from the pinned source in
+`language-models/sources.tsv`. The app checks every download against the published size and
+sha256. The model is used for two things, both on the phone only: the Proofread key (off by
+default, switch it on in Settings > Toolbar) fixes spelling and grammar of the text in the
+field, or the selected part, and offers Undo; "Finish my sentence" (off by default) offers
+the next few words above the keyboard after a short pause in typing. Neither runs in password
+fields, in incognito mode or while the phone is locked.
+
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
@@ -83,7 +148,12 @@ in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard r
 Branches: work happens on `Dev`; `main` holds releases. Every push to `main` builds both
 editions, signed, plus a Google Play bundle of the full edition, and publishes them as a
 GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
-keyboard's unit tests and the app's widget tests.
+keyboard's unit tests and the app's widget tests. Every build first runs the suite's release
+checks (`dart run zt_release_checks --app keyboard --database`): keys, sync and sign-in with
+fixed values, app setup, and the database rules.
+
+The Google Play listing (title, descriptions, icon and feature graphic, in English and Hebrew)
+is in `fastlane/metadata/android/`. Screenshots are added there by hand.
 
 Local builds need Flutter 3.47.9, the Android SDK and NDK, and a `.env` with `SUPABASE_URL`
 and `SUPABASE_ANON_KEY`. The app version is the `version:` line of `pubspec.yaml`.

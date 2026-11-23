@@ -95,6 +95,9 @@ fun getCodeForToolbarKey(key: ToolbarKey) = Settings.getInstance().getCustomTool
     SPLIT -> KeyCode.SPLIT_LAYOUT
     FLOATING -> KeyCode.TOGGLE_FLOATING_WINDOW
     BACKGROUND_GATHERING -> KeyCode.BACKGROUND_GATHERING
+    TRANSLATE -> KeyCode.TRANSLATE
+    ZT_INSERT -> KeyCode.ZT_INSERT
+    ZT_PROOFREAD -> KeyCode.ZT_PROOFREAD
 }
 
 fun getCodeForToolbarKeyLongClick(key: ToolbarKey) = Settings.getInstance().getCustomToolbarLongpressCode(key) ?: when (key) {
@@ -121,7 +124,13 @@ fun getCodeForToolbarKeyLongClick(key: ToolbarKey) = Settings.getInstance().getC
 enum class ToolbarKey {
     VOICE, CLIPBOARD, NUMPAD, DPAD, UNDO, REDO, SETTINGS, SELECT_ALL, SELECT_WORD, COPY, CUT, PASTE, ONE_HANDED, FLOATING, SPLIT,
     INCOGNITO, AUTOCORRECT, CLEAR_CLIPBOARD, CLOSE_HISTORY, EMOJI, LEFT, RIGHT, UP, DOWN, WORD_LEFT, WORD_RIGHT,
-    PAGE_UP, PAGE_DOWN, FULL_LEFT, FULL_RIGHT, PAGE_START, PAGE_END, BACKGROUND_GATHERING
+    PAGE_UP, PAGE_DOWN, FULL_LEFT, FULL_RIGHT, PAGE_START, PAGE_END, BACKGROUND_GATHERING,
+    /** ZT Keyboard: translate the text in the field, on the phone. */
+    TRANSLATE,
+    /** ZT Keyboard: type a text picked in another Zero-Trust app (a contact's number, a note line, a date). */
+    ZT_INSERT,
+    /** ZT Keyboard: fix spelling and grammar with the language model on the phone. */
+    ZT_PROOFREAD
 }
 
 enum class ToolbarMode {
@@ -131,7 +140,11 @@ enum class ToolbarMode {
 val toolbarKeyStrings = entries.associateWithTo(EnumMap(ToolbarKey::class.java)) { it.toString().lowercase(Locale.US) }
 
 val defaultToolbarPref by lazy {
-    val default = listOf(SETTINGS, VOICE, CLIPBOARD, UNDO, REDO, SELECT_WORD, COPY, PASTE, LEFT, RIGHT)
+    // ZT Keyboard: Translate is on the toolbar where there is something behind it (not in the Offline edition).
+    val default = listOfNotNull(
+        SETTINGS, VOICE, TRANSLATE.takeIf { dev.sagron.zerotrustkeyboard.translate.TranslateEngine.available },
+        CLIPBOARD, UNDO, REDO, SELECT_WORD, COPY, PASTE, LEFT, RIGHT,
+    )
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
