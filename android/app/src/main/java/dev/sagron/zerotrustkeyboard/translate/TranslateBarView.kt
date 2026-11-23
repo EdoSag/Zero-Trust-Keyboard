@@ -14,8 +14,8 @@ import helium314.keyboard.latin.common.ColorType
 import helium314.keyboard.latin.settings.Settings
 
 /**
- * The bar shown in place of the suggestions while a translation is worked out, and after
- * it: what was translated to what, and Cancel, or Undo and Done.
+ * The bar shown in place of the suggestions while a translation (or a proofreading) is worked
+ * out, and after it: what is happening, and Cancel, or Undo and Done.
  */
 class TranslateBarView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     LinearLayout(context, attrs) {
@@ -70,21 +70,20 @@ class TranslateBarView @JvmOverloads constructor(context: Context, attrs: Attrib
         listOf(status, cancel, undo, done).forEach { it.setTextColor(text) }
     }
 
-    /** @param seconds how long the phone has been working on the translation */
-    fun showWorking(from: String, to: String, seconds: Int) {
+    /** While the phone works: [text] says what it is doing, with Cancel. */
+    fun showWorking(text: String) {
         cancel.visibility = VISIBLE
         undo.visibility = GONE
         done.visibility = GONE
-        val languages = context.getString(R.string.zt_translate_from_to, TranslateCatalog.name(from), TranslateCatalog.name(to))
-        status.text = if (seconds < 2) context.getString(R.string.zt_translate_working, languages)
-        else context.getString(R.string.zt_translate_working_time, languages, seconds)
+        status.text = text
     }
 
-    fun showDone(from: String, to: String) {
+    /** When it is done: [text] says what was done, with Undo and Done. */
+    fun showDone(text: String) {
         cancel.visibility = GONE
         undo.visibility = VISIBLE
         done.visibility = VISIBLE
-        status.text = context.getString(R.string.zt_translate_from_to, TranslateCatalog.name(from), TranslateCatalog.name(to))
+        status.text = text
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()

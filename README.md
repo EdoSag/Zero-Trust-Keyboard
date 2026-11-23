@@ -43,6 +43,7 @@ builds only; the Play build leaves the permission and the setting out.
 | ZT app around it (setup, optional Zero-Trust account, app lock, shared settings) | yes | no |
 | `INTERNET` permission | yes, for the account only | **no** |
 | `READ_SMS` permission (codes from text messages, off until turned on) | yes, GitHub build only | yes |
+| Writing help language model | downloaded in settings | added from a file |
 | Launcher icon opens | the ZT app | the keyboard's settings |
 
 The keyboard is a native Android service (`android/`, Kotlin/Java/C++). The ZT app is Flutter
@@ -116,6 +117,19 @@ that asked, within two minutes, and never anywhere else. The keyboard never read
 app's data. Both sides check that the other app is signed with the same key
 (`PackageManager.checkSignatures`), so no other app can offer itself to the keyboard or ask
 a Zero-Trust app for a value. The key does nothing while the phone is locked.
+
+Writing help (phase K6) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/lm/`
+with the engine in `android/llm/`: llama.cpp (MIT), fetched by CMake at a pinned release tag
+and sha256 and built into `libzt_llm.so`. It needs a small language model in GGUF format,
+downloaded once in Settings > Writing help (or added from a file in the Offline edition):
+Qwen2.5 0.5B Instruct (Apache-2.0, about 400 MB), mirrored to the `language-models` release
+of this repository by the "Language models" workflow from the pinned source in
+`language-models/sources.tsv`. The app checks every download against the published size and
+sha256. The model is used for two things, both on the phone only: the Proofread key (off by
+default, switch it on in Settings > Toolbar) fixes spelling and grammar of the text in the
+field, or the selected part, and offers Undo; "Finish my sentence" (off by default) offers
+the next few words above the keyboard after a short pause in typing. Neither runs in password
+fields, in incognito mode or while the phone is locked.
 
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.

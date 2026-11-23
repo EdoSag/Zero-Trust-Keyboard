@@ -1,0 +1,5 @@
+# The language models offered for download in ZT Keyboard (Settings > Writing help).
+# The "Language models" workflow mirrors them to the release "language-models" of this repository.
+# Fields, separated by tabs:
+# file	source	sha256 of the source	English name	Hebrew name
+qwen2.5-0.5b-instruct-q4_0.gguf	https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_0.gguf	7671c0c304e6ce5a7fc577bcb12aba01e2c155cc2efd29b2213c95b18edaf6ed	Qwen2.5 0.5B (Apache-2.0)	Qwen2.5 0.5B (Apache-2.0)

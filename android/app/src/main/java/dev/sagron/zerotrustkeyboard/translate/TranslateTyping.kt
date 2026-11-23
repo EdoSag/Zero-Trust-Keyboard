@@ -21,12 +21,15 @@ import helium314.keyboard.settings.SettingsDestination
  * The Translate key: translates what is written in the text field (or the selected part
  * of it) between the user's two languages, in place. The bar that appears offers Undo.
  * The translation is worked out on the phone; the text is not sent anywhere.
+ *
+ * The Proofread key works the same way, with the language model on the phone
+ * (dev.sagron.zerotrustkeyboard.lm) fixing spelling and grammar instead of translating.
  */
 class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
     private enum class State { IDLE, WORKING, DONE }
 
-    /** What was translated, and where it sits in the text field. */
-    private class Job(val start: Int, val original: String, val from: String, val to: String) {
+    /** What was translated (or proofread), and where it sits in the text field. */
+    private class Job(val start: Int, val original: String, val working: (Int) -> String, val done: String) {
         var translated: String? = null
     }
 
@@ -47,7 +50,7 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         override fun run() {
             val current = job
             if (state != State.WORKING || current == null) return
-            bar?.showWorking(current.from, current.to, ((SystemClock.elapsedRealtime() - workingSince) / 1000).toInt())
+            bar?.showWorking(current.working(((SystemClock.elapsedRealtime() - workingSince) / 1000).toInt()))
             handler.postDelayed(this, 1000)
         }
     }
@@ -59,15 +62,20 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         val current = job
         if (state == State.IDLE || current == null) return
         showBar()
-        if (state == State.WORKING) tick.run() else bar?.showDone(current.from, current.to)
+        if (state == State.WORKING) tick.run() else bar?.showDone(current.done)
     }
 
     /** The Translate key was pressed. */
-    fun onTranslateKey() {
+    fun onTranslateKey() = onKey { start() }
+
+    /** The Proofread key was pressed. */
+    fun onProofreadKey() = onKey { startProofread() }
+
+    private fun onKey(start: () -> Unit) {
         when (state) {
             State.WORKING -> Unit
             State.DONE -> {
-                // A second press on a finished translation starts over with what is there now.
+                // A second press on a finished job starts over with what is there now.
                 close()
                 start()
             }
@@ -90,7 +98,10 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
 
     private fun close() {
         session++
-        if (state == State.WORKING) TranslateEngine.cancel(engineId)
+        if (state == State.WORKING) {
+            TranslateEngine.cancel(engineId)
+            dev.sagron.zerotrustkeyboard.lm.LanguageModelEngine.cancel()
+        }
         state = State.IDLE
         job = null
         handler.removeCallbacks(tick)
@@ -120,11 +131,15 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         val (from, to) = TranslateText.direction(source.text, mine, other, keyboard)
         if (TranslateCatalog.route(TranslateModels.installed(ime), from, to) == null) {
             toast(R.string.zt_translate_needs_languages)
-            openSettings()
+            openSettings(SettingsDestination.Translate)
             return
         }
         val pieces = TranslateText.pieces(source.text)
-        val current = Job(source.start, source.text, from, to)
+        val languages = ime.getString(R.string.zt_translate_from_to, TranslateCatalog.name(from), TranslateCatalog.name(to))
+        val current = Job(source.start, source.text, { seconds ->
+            if (seconds < 2) ime.getString(R.string.zt_translate_working, languages)
+            else ime.getString(R.string.zt_translate_working_time, languages, seconds)
+        }, languages)
         job = current
         state = State.WORKING
         workingSince = SystemClock.elapsedRealtime()
@@ -147,17 +162,79 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
                 toast(R.string.zt_translate_text_changed)
                 return@translate
             }
-            val translated = TranslateText.join(pieces, out)
-            // Typing the translation is itself input; it must not close the bar.
-            current.translated = translated
-            typing = true
-            try {
-                ime.ztReplaceText(current.start, current.start + current.original.length, translated)
-            } finally {
-                typing = false
+            finish(current, TranslateText.join(pieces, out))
+        }
+    }
+
+    /** Puts the finished text in place of the original and offers Undo. */
+    private fun finish(current: Job, translated: String) {
+        // Typing the translation is itself input; it must not close the bar.
+        current.translated = translated
+        typing = true
+        try {
+            ime.ztReplaceText(current.start, current.start + current.original.length, translated)
+        } finally {
+            typing = false
+        }
+        state = State.DONE
+        bar?.showDone(current.done)
+    }
+
+    private fun startProofread() {
+        val model = dev.sagron.zerotrustkeyboard.lm.LanguageModels.installed(ime)
+        if (!dev.sagron.zerotrustkeyboard.lm.LanguageModels.available || model == null) {
+            toast(R.string.zt_proofread_needs_model)
+            openSettings(SettingsDestination.WritingHelp)
+            return
+        }
+        if (Settings.getValues().mInputAttributes.mIsPasswordField) {
+            toast(R.string.zt_proofread_not_here)
+            return
+        }
+        val source = source()
+        if (source == null || source.text.isBlank()) {
+            toast(R.string.zt_proofread_nothing)
+            return
+        }
+        if (source.text.length > dev.sagron.zerotrustkeyboard.lm.WritingPrompts.MAX_PROOFREAD_CHARS) {
+            toast(R.string.zt_proofread_too_long)
+            return
+        }
+        val current = Job(source.start, source.text, { seconds ->
+            if (seconds < 2) ime.getString(R.string.zt_proofread_working)
+            else ime.getString(R.string.zt_proofread_working_time, seconds)
+        }, ime.getString(R.string.zt_proofread_done))
+        job = current
+        state = State.WORKING
+        workingSince = SystemClock.elapsedRealtime()
+        showBar()
+        handler.removeCallbacks(tick)
+        tick.run()
+        val mySession = ++session
+        ime.ztCancelSentenceCompletion()
+        val prompts = dev.sagron.zerotrustkeyboard.lm.WritingPrompts
+        dev.sagron.zerotrustkeyboard.lm.LanguageModelEngine.generate(
+            model, prompts.proofreadPrompt(source.text), prompts.proofreadTokens(source.text), false
+        ) { answer ->
+            if (mySession != session) return@generate
+            handler.removeCallbacks(tick)
+            val fixed = prompts.cleanProofread(source.text, answer)
+            if (fixed == null) {
+                close()
+                toast(R.string.zt_proofread_failed)
+                return@generate
             }
-            state = State.DONE
-            bar?.showDone(from, to)
+            if (!holds(current.start, current.original)) {
+                close()
+                toast(R.string.zt_translate_text_changed)
+                return@generate
+            }
+            if (fixed == current.original) {
+                close()
+                toast(R.string.zt_proofread_nothing_to_fix)
+                return@generate
+            }
+            finish(current, fixed)
         }
     }
 
@@ -260,14 +337,14 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         containerVisibility = null
     }
 
-    private fun openSettings() {
+    private fun openSettings(screen: String) {
         val intent = Intent(ime, SettingsActivity2::class.java)
-            .putExtra(VoiceTyping.EXTRA_SCREEN, SettingsDestination.Translate)
+            .putExtra(VoiceTyping.EXTRA_SCREEN, screen)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         try {
             ime.startActivity(intent)
         } catch (e: Exception) {
-            Log.w(TAG, "could not open the translate settings", e)
+            Log.w(TAG, "could not open the settings", e)
         }
     }
 

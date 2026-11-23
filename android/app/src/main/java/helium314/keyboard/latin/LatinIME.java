@@ -155,6 +155,25 @@ public class LatinIME extends InputMethodService implements
     private final dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher mSmsCodeWatcher =
             new dev.sagron.zerotrustkeyboard.otp.SmsCodes.Watcher(this, this::onTextMessageArrived);
     public dev.sagron.zerotrustkeyboard.translate.TranslateTyping getTranslateTyping() { return mTranslateTyping; }
+    // ZT Keyboard: finish my sentence, with the language model on the phone.
+    private final dev.sagron.zerotrustkeyboard.lm.SentenceCompletion mSentenceCompletion =
+            new dev.sagron.zerotrustkeyboard.lm.SentenceCompletion(this);
+
+    /** ZT Keyboard: shows a chip (a code, the end of a sentence) in place of the suggestions. */
+    public void ztShowSuggestionChip(@Nullable final View chip) {
+        if (chip != null && hasSuggestionStripView()) mSuggestionStripView.setExternalSuggestionView(chip, false);
+    }
+
+    /** ZT Keyboard: the language model is needed for something else (proofreading). */
+    public void ztCancelSentenceCompletion() {
+        mSentenceCompletion.cancel();
+    }
+
+    /** ZT Keyboard: the suggestion strip, as the parent for a chip's layout. */
+    @Nullable
+    public android.view.ViewGroup ztSuggestionStrip() {
+        return hasSuggestionStripView() ? mSuggestionStripView : null;
+    }
 
     /** ZT Keyboard: lets the word being typed stand as it is, so the text field holds everything written. */
     public void ztFinishWord() {
@@ -1100,6 +1119,7 @@ public class LatinIME extends InputMethodService implements
         mVoiceTyping.cancel();
         mTranslateTyping.cancel();
         mSmsCodeWatcher.stop();
+        mSentenceCompletion.cancel();
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
     }
@@ -1729,6 +1749,7 @@ public class LatinIME extends InputMethodService implements
         if (inputTransaction.didAffectContents()) {
             mSubtypeState.setCurrentSubtypeHasBeenUsed();
         }
+        mSentenceCompletion.onInput();
     }
 
     public void hapticAndAudioFeedback(final int code, final int repeatCount,
