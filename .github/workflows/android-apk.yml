@@ -143,7 +143,7 @@ jobs:
       - name: Build the full edition APK
         run: |
           set -e
-          flutter build apk --release --flavor full --build-number="$BUILD"
+          flutter build apk --release --flavor full --build-number="$BUILD" --dart-define=ZT_CHANNEL=direct
           APK="$APP_SLUG-$VERSION-build$BUILD.apk"
           cp build/app/outputs/flutter-apk/app-full-release.apk "$APK"
           echo "APK=$APK" >> "$GITHUB_ENV"
