@@ -19,6 +19,8 @@ object InsertHandOver {
     private class Request(val app: String, val field: Int, val at: Long) {
         var text: String? = null
         var textAt = 0L
+        /** Wall-clock time (epoch ms) after which the text is useless, 0 for none: a one-time code. */
+        var validUntil = 0L
     }
 
     private var request: Request? = null
@@ -29,9 +31,13 @@ object InsertHandOver {
         request = if (app.isNullOrEmpty()) null else Request(app, field, now)
     }
 
-    /** The other app answered with [text]. False when nobody is waiting for it any more. */
+    /**
+     * The other app answered with [text]. False when nobody is waiting for it any more.
+     * [validUntil] (epoch ms, 0 for none) is when a one-time code stops working: it is then
+     * dropped instead of being typed.
+     */
     @Synchronized
-    fun answer(text: String?, now: Long): Boolean {
+    fun answer(text: String?, now: Long, validUntil: Long = 0L): Boolean {
         val current = request ?: return false
         if (text.isNullOrEmpty() || now - current.at > WAIT_MS) {
             request = null
@@ -39,6 +45,7 @@ object InsertHandOver {
         }
         current.text = text.take(MAX_CHARS)
         current.textAt = now
+        current.validUntil = validUntil
         return true
     }
 
@@ -53,7 +60,7 @@ object InsertHandOver {
      * is waiting for exactly this field. A text waiting for another field is dropped.
      */
     @Synchronized
-    fun take(app: String?, field: Int, now: Long): String? {
+    fun take(app: String?, field: Int, now: Long, wallNow: Long = System.currentTimeMillis()): String? {
         val current = request ?: return null
         val text = current.text
         if (text == null) {
@@ -64,6 +71,7 @@ object InsertHandOver {
         }
         request = null
         if (app != current.app || field != current.field || now - current.textAt > WAIT_MS) return null
+        if (current.validUntil > 0 && wallNow >= current.validUntil) return null
         return text
     }
 }

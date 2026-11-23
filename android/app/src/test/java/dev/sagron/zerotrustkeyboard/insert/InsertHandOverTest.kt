@@ -64,4 +64,14 @@ class InsertHandOverTest {
         InsertHandOver.answer("a".repeat(InsertHandOver.MAX_CHARS + 50), 10)
         assertEquals(InsertHandOver.MAX_CHARS, InsertHandOver.take("mail", 3, 20)!!.length)
     }
+
+    @Test fun `a one-time code is not typed once it stopped working`() {
+        InsertHandOver.ask("bank", 3, 0)
+        assertTrue(InsertHandOver.answer("482913", 1_000, validUntil = 50_000))
+        assertNull(InsertHandOver.take("bank", 3, 2_000, wallNow = 50_000))
+
+        InsertHandOver.ask("bank", 3, 0)
+        assertTrue(InsertHandOver.answer("482913", 1_000, validUntil = 50_000))
+        assertEquals("482913", InsertHandOver.take("bank", 3, 2_000, wallNow = 49_000))
+    }
 }

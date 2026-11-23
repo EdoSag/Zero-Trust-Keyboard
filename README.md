@@ -118,6 +118,15 @@ app's data. Both sides check that the other app is signed with the same key
 (`PackageManager.checkSignatures`), so no other app can offer itself to the keyboard or ask
 a Zero-Trust app for a value. The key does nothing while the phone is locked.
 
+One-time codes from ZT Authenticator come the same way. On a field that asks for a code (a
+numeric password field, or a hint or label like "code" or "verification"), the strip shows
+"Code from ZT Authenticator" when that app is on the phone and signed with our key. A tap
+opens it with the category `bz.zerotrust.category.ONE_TIME_CODE` and the extra
+`bz.zerotrust.extra.FOR_PACKAGE` (the app of the text field), so it can pick the account.
+The code it hands back is typed in that field only, without being learned or put on the
+clipboard, and is dropped once `bz.zerotrust.extra.VALID_UNTIL` has passed. The chip stays
+away when the field already shows an autofill suggestion.
+
 Writing help (phase K6) is in `android/app/src/main/java/dev/sagron/zerotrustkeyboard/lm/`
 with the engine in `android/llm/`: llama.cpp (MIT), fetched by CMake at a pinned release tag
 and sha256 and built into `libzt_llm.so`. It needs a small language model in GGUF format,

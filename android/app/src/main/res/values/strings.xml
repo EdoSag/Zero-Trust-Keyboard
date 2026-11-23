@@ -1413,6 +1413,8 @@ New dictionary:
     <string name="zt_sms_codes_summary">Offer a one-time code from a message that arrived in the last 10 minutes. The messages are read on this phone only, and nothing is kept.</string>
     <string name="zt_sms_code_spoken">Type the code %s from a text message</string>
     <string name="zt_sms_code_dismiss">Dismiss the code</string>
+    <string name="zt_authenticator_code">Code from %s</string>
+    <string name="zt_authenticator_code_dismiss">Hide the code button for this field</string>
     <string name="zt_proofread" tools:keep="@string/zt_proofread">Proofread</string>
     <string name="zt_proofread_working">Proofreading…</string>
     <string name="zt_proofread_working_time">Proofreading… %d s</string>
