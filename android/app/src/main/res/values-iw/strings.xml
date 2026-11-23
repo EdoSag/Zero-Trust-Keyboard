@@ -645,6 +645,8 @@
     <string name="zt_sms_codes_summary">"הצעת קוד חד־פעמי מהודעה שהגיעה ב־10 הדקות האחרונות. ההודעות נקראות בטלפון הזה בלבד, ושום דבר לא נשמר."</string>
     <string name="zt_sms_code_spoken">"הקלדת הקוד %s מהודעת SMS"</string>
     <string name="zt_sms_code_dismiss">"סגירת הקוד"</string>
+    <string name="zt_authenticator_code">"קוד מ־%s"</string>
+    <string name="zt_authenticator_code_dismiss">"הסתרת כפתור הקוד בשדה הזה"</string>
     <string name="zt_proofread" tools:keep="@string/zt_proofread">"הגהה"</string>
     <string name="zt_proofread_working">"מגיה…"</string>
     <string name="zt_proofread_working_time">"מגיה… %d ש׳"</string>

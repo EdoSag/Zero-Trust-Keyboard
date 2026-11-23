@@ -164,6 +164,9 @@ public class LatinIME extends InputMethodService implements
         if (chip != null && hasSuggestionStripView()) mSuggestionStripView.setExternalSuggestionView(chip, false);
     }
 
+    // ZT Keyboard: the text field shows an autofill suggestion, so no code chip of our own.
+    private boolean mZtAutofillShown = false;
+
     /** ZT Keyboard: the language model is needed for something else (proofreading). */
     public void ztCancelSentenceCompletion() {
         mSentenceCompletion.cancel();
@@ -904,6 +907,8 @@ public class LatinIME extends InputMethodService implements
 
     private void onStartInputInternal(EditorInfo editorInfo, boolean restarting) {
         super.onStartInput(editorInfo, restarting);
+        // ZT Keyboard: a new text field has no autofill suggestion yet.
+        if (!restarting) mZtAutofillShown = false;
 
         RichInputMethodSubtype subtypeForApp = editorInfo == null
             ? null :
@@ -1071,7 +1076,8 @@ public class LatinIME extends InputMethodService implements
         // back in the text field that asked for it.
         final String picked = dev.sagron.zerotrustkeyboard.insert.InsertHandOver.INSTANCE.take(
                 editorInfo == null ? null : editorInfo.packageName,
-                editorInfo == null ? 0 : editorInfo.fieldId, android.os.SystemClock.elapsedRealtime());
+                editorInfo == null ? 0 : editorInfo.fieldId, android.os.SystemClock.elapsedRealtime(),
+                System.currentTimeMillis());
         if (picked != null && !mSettings.getCurrent().mIsLocked)
             mHandler.post(() -> onTextInput(picked));
 
@@ -1404,6 +1410,7 @@ public class LatinIME extends InputMethodService implements
             return false;
         }
 
+        mZtAutofillShown = true;
         final View inlineSuggestionView = InlineAutofillUtils.createView(inlineSuggestions, mDisplayContext);
 
         // Without this function the inline autofill suggestions will not be visible
@@ -1646,6 +1653,13 @@ public class LatinIME extends InputMethodService implements
             mSuggestionStripView.setExternalSuggestionView(codeView, false);
             return true;
         }
+        // ZT Keyboard: then a code from ZT Authenticator, on fields that ask for one.
+        final View authenticatorView = dev.sagron.zerotrustkeyboard.otp.AuthenticatorCodeSuggestion.INSTANCE.view(
+                this, getCurrentInputEditorInfo(), mSuggestionStripView, isTextFieldEmpty(), mZtAutofillShown);
+        if (authenticatorView != null) {
+            mSuggestionStripView.setExternalSuggestionView(authenticatorView, false);
+            return true;
+        }
         View clipboardView = mClipboardHistoryManager.getClipboardSuggestionView(getCurrentInputEditorInfo(), mSuggestionStripView);
         if (clipboardView != null) {
             mSuggestionStripView.setExternalSuggestionView(clipboardView, false);
@@ -1702,6 +1716,8 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void removeExternalSuggestions() {
+        // ZT Keyboard: a closed autofill suggestion no longer stands in for the code chip.
+        mZtAutofillShown = false;
         setNeutralSuggestionStrip();
         mHandler.postResumeSuggestions(false);
     }

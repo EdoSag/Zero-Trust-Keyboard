@@ -20,6 +20,16 @@ object ZtApps {
     const val ACTION_PICK_TEXT = "bz.zerotrust.action.PICK_TEXT"
     const val EXTRA_TEXT = "bz.zerotrust.extra.TEXT"
 
+    /** Asks only for a one-time code (ZT Authenticator), with the two extras below. */
+    const val CATEGORY_ONE_TIME_CODE = "bz.zerotrust.category.ONE_TIME_CODE"
+    /** The app the code is for: the package of the text field. Lets the other app pick the account. */
+    const val EXTRA_FOR_PACKAGE = "bz.zerotrust.extra.FOR_PACKAGE"
+    /** The website the code is for, when the keyboard knows it. */
+    const val EXTRA_FOR_DOMAIN = "bz.zerotrust.extra.FOR_DOMAIN"
+    /** In the answer: epoch ms when the code stops working; absent for counter-based codes. */
+    const val EXTRA_VALID_UNTIL = "bz.zerotrust.extra.VALID_UNTIL"
+    const val AUTHENTICATOR_PACKAGE = "dev.sagron.zerotrustauthenticator"
+
     class Source(val component: ComponentName, val label: String)
 
     /** The apps that answer [ACTION_PICK_TEXT] and are signed with the keyboard's own key. */
@@ -41,4 +51,24 @@ object ZtApps {
     }
 
     fun pickIntent(source: Source): Intent = Intent(ACTION_PICK_TEXT).setComponent(source.component)
+
+    /** ZT Authenticator, when it is on this phone, answers code requests and is signed with our key. */
+    fun authenticator(context: Context): Source? {
+        val pm = context.packageManager
+        val intent = Intent(ACTION_PICK_TEXT).addCategory(CATEGORY_ONE_TIME_CODE).setPackage(AUTHENTICATOR_PACKAGE)
+        val activity = try {
+            pm.queryIntentActivities(intent, 0).firstOrNull()?.activityInfo
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        if (pm.checkSignatures(context.packageName, activity.packageName) != PackageManager.SIGNATURE_MATCH) return null
+        return Source(ComponentName(activity.packageName, activity.name), activity.applicationInfo.loadLabel(pm).toString())
+    }
+
+    /** Asks [source] for a one-time code for the text field of the app [forPackage]. */
+    fun codeIntent(source: Source, forPackage: String?, forDomain: String?): Intent =
+        Intent(ACTION_PICK_TEXT).addCategory(CATEGORY_ONE_TIME_CODE).setComponent(source.component).apply {
+            if (!forPackage.isNullOrEmpty()) putExtra(EXTRA_FOR_PACKAGE, forPackage)
+            if (!forDomain.isNullOrEmpty()) putExtra(EXTRA_FOR_DOMAIN, forDomain)
+        }
 }
