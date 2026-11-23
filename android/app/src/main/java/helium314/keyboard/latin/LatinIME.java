@@ -1716,6 +1716,8 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void removeExternalSuggestions() {
+        // ZT Keyboard: a closed autofill suggestion no longer stands in for the code chip.
+        mZtAutofillShown = false;
         setNeutralSuggestionStrip();
         mHandler.postResumeSuggestions(false);
     }
