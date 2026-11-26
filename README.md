@@ -1,15 +1,34 @@
 # Zero-Trust Keyboard
 
-A private Android keyboard for the Zero-Trust suite. Store name **Zero-Trust Keyboard**,
-launcher name **ZT Keyboard**.
+A private Android keyboard for the Zero-Trust suite. Everything you type
+stays on your phone: word prediction, autocorrect and learning run on the
+device, and the keyboard itself never uses the internet. On the phone it is
+called **ZT Keyboard**; in stores and on release pages, **Zero-Trust
+Keyboard**. Part of the [Zero-Trust suite](https://zerotrust.bz).
 
-Everything you type stays on your phone. Word prediction, autocorrect and learning run on the
-device, and the keyboard itself never uses the internet. Hebrew and English are first-class
-and both are on by default, including typing both in one sentence.
+## What it does
 
-Plan and roadmap (phases K0 to K6): swipe typing with our own open decoder, on-device voice
-typing, on-device translation, and optional end-to-end encrypted sync of your personal
-dictionary through your Zero-Trust account.
+- **Hebrew and English first-class**, both on by default, including typing
+  both in one sentence. Layouts for many other languages come from
+  HeliBoard.
+- **Swipe typing** with our own open decoder, on the device.
+- **Voice typing** on the phone (whisper.cpp): the sound is never stored or
+  sent.
+- **Translate** what you wrote, on the phone (Firefox's Bergamot engine and
+  Mozilla's models).
+- **Writing help** (off by default): Proofread, and "Finish my sentence",
+  with a small language model that runs on the phone.
+- **Emoji search and emoji names** in Hebrew and English, with nothing to
+  download.
+- **Codes typed for you:** one-time codes from text messages, and codes
+  from ZT Authenticator, offered as a chip above the keyboard.
+- **Insert from ZT apps** (off by default): pick a value in another
+  Zero-Trust app and the keyboard types it.
+- **Sync my personal dictionary** (optional, signed in): your added words
+  and shortcuts on every phone of the account, end-to-end encrypted.
+- **Offline edition** with no internet permission at all.
+
+How each of these works is under [Based on HeliBoard](#based-on-heliboard).
 
 The Hebrew dictionary (181,813 words) is our own "ZT Hebrew" list: the Android Open Source
 Project's Hebrew word list, widened with the words people really use (from OpenSubtitles
@@ -33,6 +52,60 @@ permission to read text messages. The messages are read on the phone only and no
 kept. Android 15 hides these codes from notification readers, so reading the messages is the
 only way. Google Play allows that permission only for SMS apps, so this is in the GitHub
 builds only; the Play build leaves the permission and the setting out.
+
+## Privacy
+
+ZT Keyboard works without an account. When you sign in, it is zero-knowledge like every Zero-Trust app: your data is encrypted on
+your device, with keys made from your password, before anything is sent.
+The server stores only ciphertext and your password itself is never
+sent, so neither we nor anyone who breaks into the server can read your
+data. The recovery key shown at sign-up is the only way back in if you
+forget the password. How the keys work:
+[Zero-Trust-Core](https://github.com/EdoSag/Zero-Trust-Core#key-hierarchy) and
+[zerotrust.bz/security](https://zerotrust.bz/security/).
+
+- The keyboard itself never uses the internet. In the full edition the
+  `INTERNET` permission is for the account and for downloading models and
+  languages you ask for; the Offline edition has no such permission.
+- The keyboard never holds the account's key. Dictionary sync runs in the
+  ZT app, while it is open and unlocked.
+- Voice typing, translation and writing help run on the phone. Every
+  downloaded model is checked against a published size and sha256.
+- Text messages are read on the phone only, for the code chip, and nothing
+  is kept.
+- Values from other Zero-Trust apps are handed over only between apps
+  signed with the same key.
+
+## One account, one core
+
+Signing in is optional. The account is the one Zero-Trust account that opens every app in the suite. Sign-in, unlock
+(fingerprint or face, auto-lock), the recovery key, settings, the look,
+sync and languages come from
+[Zero-Trust-Core](https://github.com/EdoSag/Zero-Trust-Core), so they work
+the same in every app. Accounts made before the core still sign in and
+see their data.
+
+## Install
+
+Android: get the latest signed APK from this repository's
+[Releases](https://github.com/EdoSag/Zero-Trust-Keyboard/releases/latest),
+or from [zerotrust.bz/install](https://zerotrust.bz/install/#keyboard),
+which also shows each file's SHA-256, the signing fingerprint and an
+Obtainium link. GitHub Releases are the main way the apps are published.
+
+Builds from GitHub check for a newer release themselves (Settings > About,
+one anonymous request a day, can be turned off). Every Zero-Trust app is signed
+with the same key, and Android only installs an update signed with it.
+
+Each release has two APKs: ZT Keyboard, and ZT Keyboard Offline (no internet
+permission, no account, no ZT app around it). They can be installed side by
+side; see [Two editions](#two-editions).
+
+## Languages
+
+The ZT app around the keyboard is in English and Hebrew, with right-to-left
+layout. The keyboard itself has layouts and dictionaries for many
+languages; Hebrew and English are on by default.
 
 ## Two editions
 
@@ -143,17 +216,7 @@ fields, in incognito mode or while the phone is locked.
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.
 
-## Building
-
-Branches: work happens on `Dev`; `main` holds releases. Every push to `main` builds both
-editions, signed, plus a Google Play bundle of the full edition, and publishes them as a
-GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
-keyboard's unit tests and the app's widget tests. Every build first runs the suite's release
-checks (`dart run zt_release_checks --app keyboard --database`): keys, sync and sign-in with
-fixed values, app setup, and the database rules.
-
-The Google Play listing (title, descriptions, icon and feature graphic, in English and Hebrew)
-is in `fastlane/metadata/android/`. Screenshots are added there by hand.
+## Build from source
 
 Local builds need Flutter 3.47.9, the Android SDK and NDK, and a `.env` with `SUPABASE_URL`
 and `SUPABASE_ANON_KEY`. The app version is the `version:` line of `pubspec.yaml`.
@@ -172,6 +235,32 @@ cd android && ./gradlew -PztOffline :app:testOfflineRunTestsUnitTest
 
 The edition is chosen by the `ztOffline` Gradle property, not by a flavor picker, because the
 Flutter Gradle plugin cannot be left out of one flavor only.
+
+Never add `cryptography_flutter`: it breaks the core's key derivation and
+sign-in fails.
+
+## Branches and releases
+
+Work happens on `Dev`: pull requests target `Dev`, never `main`. A release is
+one `Dev` → `main` pull request. Every push to `main` builds both
+editions, signed, plus a Google Play bundle of the full edition, and publishes them as a
+GitHub Release (`.github/workflows/android-apk.yml`). Pull requests get test builds, the
+keyboard's unit tests and the app's widget tests. Every build first runs the suite's release
+checks (`dart run zt_release_checks --app keyboard --database`): keys, sync and sign-in with
+fixed values, app setup, and the database rules.
+
+The Google Play listing (title, descriptions, icon and feature graphic, in English and Hebrew)
+is in `fastlane/metadata/android/`. Screenshots are added there by hand.
+
+## Support and security
+
+- Help centre: [zerotrust.bz/help](https://zerotrust.bz/help/). Questions and
+  account deletion: support@zerotrust.bz.
+- Security problems: please report them privately to cyber@zerotrust.bz. What
+  the encryption does and doesn't protect against is on
+  [zerotrust.bz/security](https://zerotrust.bz/security/).
+- [Privacy policy](https://zerotrust.bz/privacy/) and
+  [terms](https://zerotrust.bz/terms/).
 
 ## License
 
@@ -193,6 +282,12 @@ GPL-3.0 and AGPL-3.0 code may be combined (section 13 of both licences).
 The licences cover the code, not the brand. "Zero-Trust", "ZT", the app names and icons are
 reserved. If you publish a fork, give it a different name and icon so nobody mistakes it
 for an official Zero-Trust app.
+
+### Servers
+
+The full edition uses the Zero-Trust servers for the optional account. A fork
+must use its own backend (for example its own Supabase project) and must not
+connect to the official servers.
 
 ### Contributing
 
