@@ -1474,5 +1474,5 @@ New dictionary:
     <string name="zt_writing_assist_missing">With the ZT Assist app on this phone, the Proofread key gets a larger model that is better in Hebrew, and a Rewrite key can reword what you wrote. Get ZT Assist from zerotrust.bz.</string>
     <string name="zt_writing_assist_untrusted">An app on this phone uses the name of ZT Assist but is not signed by Zero-Trust, so the keyboard does not use it.</string>
     <string name="zt_writing_use_assist">Proofread with ZT Assist</string>
-    <string name="zt_writing_use_assist_summary">Better, above all in Hebrew, but slower. When ZT Assist has no model yet, the keyboard's own model is used.</string>
+    <string name="zt_writing_use_assist_summary">Better, above all in Hebrew, but slower. When ZT Assist has no model yet, the keyboard\'s own model is used.</string>
 </resources>
