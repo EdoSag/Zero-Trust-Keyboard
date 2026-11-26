@@ -1453,4 +1453,26 @@ New dictionary:
     <string name="zt_writing_not_a_model">This file is not a language model in GGUF format</string>
     <string name="zt_writing_copy_failed">The file could not be copied</string>
     <string name="zt_writing_privacy">Writing help is never used in password fields, in incognito mode or while the phone is locked.</string>
+    <string name="zt_rewrite" tools:keep="@string/zt_rewrite">Rewrite</string>
+    <string name="zt_rewrite_working">Rewriting…</string>
+    <string name="zt_rewrite_working_time">Rewriting… %d s</string>
+    <string name="zt_rewrite_done">Rewritten</string>
+    <string name="zt_rewrite_nothing">Nothing to rewrite</string>
+    <string name="zt_rewrite_nothing_to_change">ZT Assist left the text as it is</string>
+    <string name="zt_rewrite_too_long">That is too long to rewrite at once. Select a part of it.</string>
+    <string name="zt_rewrite_not_here">Passwords are not rewritten</string>
+    <string name="zt_rewrite_not_incognito">Rewrite is off in incognito mode</string>
+    <string name="zt_rewrite_needs_assist">Rewrite needs the ZT Assist app on this phone</string>
+    <string name="zt_rewrite_failed">Rewriting failed, please try again</string>
+    <string name="zt_assist_not_installed">ZT Assist is not on this phone</string>
+    <string name="zt_assist_no_model">ZT Assist has no model yet. Open ZT Assist and download one.</string>
+    <string name="zt_assist_load_failed">ZT Assist could not load its model. Close a few apps and try again.</string>
+    <string name="zt_assist_needs_update">Update ZT Assist to use this</string>
+    <string name="zt_assist_stopped">ZT Assist was stopped, please try again</string>
+    <string name="zt_writing_assist">ZT Assist</string>
+    <string name="zt_writing_assist_here">ZT Assist is on this phone. Its larger model can proofread for the keyboard, and the Rewrite key (turn it on in Settings, Toolbar) has it reword what you wrote so it reads better. The text goes to ZT Assist on this phone and nowhere else, and is not kept. Not in incognito mode.</string>
+    <string name="zt_writing_assist_missing">With the ZT Assist app on this phone, the Proofread key gets a larger model that is better in Hebrew, and a Rewrite key can reword what you wrote. Get ZT Assist from zerotrust.bz.</string>
+    <string name="zt_writing_assist_untrusted">An app on this phone uses the name of ZT Assist but is not signed by Zero-Trust, so the keyboard does not use it.</string>
+    <string name="zt_writing_use_assist">Proofread with ZT Assist</string>
+    <string name="zt_writing_use_assist_summary">Better, above all in Hebrew, but slower. When ZT Assist has no model yet, the keyboard's own model is used.</string>
 </resources>

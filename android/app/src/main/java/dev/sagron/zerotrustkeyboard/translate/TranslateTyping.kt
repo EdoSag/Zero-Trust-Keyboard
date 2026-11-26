@@ -7,6 +7,8 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.view.inputmethod.ExtractedTextRequest
+import dev.sagron.zerotrustkeyboard.assist.AssistClient
+import dev.sagron.zerotrustkeyboard.assist.AssistWriting
 import dev.sagron.zerotrustkeyboard.voice.VoiceTyping
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.latin.LatinIME
@@ -14,6 +16,7 @@ import helium314.keyboard.latin.R
 import helium314.keyboard.latin.RichInputMethodManager
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.Log
+import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.settings.SettingsActivity2
 import helium314.keyboard.settings.SettingsDestination
 
@@ -24,6 +27,8 @@ import helium314.keyboard.settings.SettingsDestination
  *
  * The Proofread key works the same way, with the language model on the phone
  * (dev.sagron.zerotrustkeyboard.lm) fixing spelling and grammar instead of translating.
+ * Where ZT Assist is on the phone, its larger model does that instead
+ * (dev.sagron.zerotrustkeyboard.assist), and the Rewrite key has it reword the text.
  */
 class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
     private enum class State { IDLE, WORKING, DONE }
@@ -36,6 +41,8 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
     private var state = State.IDLE
     private var job: Job? = null
     private var engineId = 0
+    private val assist by lazy { AssistClient(ime) }
+    private var askedAssist = false
     private var bar: TranslateBarView? = null
     private var containerVisibility: Int? = null
 
@@ -69,7 +76,10 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
     fun onTranslateKey() = onKey { start() }
 
     /** The Proofread key was pressed. */
-    fun onProofreadKey() = onKey { startProofread() }
+    fun onProofreadKey() = onKey { if (assistProofreads()) startAssist(AssistWriting.Task.PROOFREAD) else startProofread() }
+
+    /** The Rewrite key was pressed. */
+    fun onRewriteKey() = onKey { startAssist(AssistWriting.Task.REWRITE) }
 
     private fun onKey(start: () -> Unit) {
         when (state) {
@@ -101,6 +111,7 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
         if (state == State.WORKING) {
             TranslateEngine.cancel(engineId)
             dev.sagron.zerotrustkeyboard.lm.LanguageModelEngine.cancel()
+            if (askedAssist) assist.cancel()
         }
         state = State.IDLE
         job = null
@@ -236,6 +247,105 @@ class TranslateTyping(private val ime: LatinIME) : TranslateBarView.Listener {
             }
             finish(current, fixed)
         }
+    }
+
+    /**
+     * Whether the Proofread key goes to ZT Assist: when it is on the phone, signed with the
+     * keyboard's key, and the user did not turn that off. Not in incognito mode, where the
+     * text stays inside the keyboard.
+     */
+    private fun assistProofreads(): Boolean =
+        ime.prefs().getBoolean(AssistWriting.PREF_USE_ASSIST, AssistWriting.DEFAULT_USE_ASSIST) &&
+            !Settings.getValues().mIncognitoModeEnabled &&
+            assist.presence() == AssistWriting.Presence.READY
+
+    /** The keyboard's own model, when this build has the engine and a model was added. */
+    private fun ownModel() = dev.sagron.zerotrustkeyboard.lm.LanguageModels.installed(ime)
+        ?.takeIf { dev.sagron.zerotrustkeyboard.lm.LanguageModels.available }
+
+    /** Has ZT Assist proofread or rewrite the text in the field, or the selected part. */
+    private fun startAssist(task: AssistWriting.Task) {
+        val rewrite = task == AssistWriting.Task.REWRITE
+        val settings = Settings.getValues()
+        if (settings.mInputAttributes.mIsPasswordField) {
+            toast(if (rewrite) R.string.zt_rewrite_not_here else R.string.zt_proofread_not_here)
+            return
+        }
+        // Only the Rewrite key gets here without the checks of assistProofreads().
+        if (rewrite && settings.mIncognitoModeEnabled) {
+            toast(R.string.zt_rewrite_not_incognito)
+            return
+        }
+        if (rewrite && assist.presence() != AssistWriting.Presence.READY) {
+            toast(R.string.zt_rewrite_needs_assist)
+            openSettings(SettingsDestination.WritingHelp)
+            return
+        }
+        val source = source()
+        if (source == null || source.text.isBlank()) {
+            toast(if (rewrite) R.string.zt_rewrite_nothing else R.string.zt_proofread_nothing)
+            return
+        }
+        if (source.text.length > AssistWriting.MAX_CHARS) {
+            toast(if (rewrite) R.string.zt_rewrite_too_long else R.string.zt_proofread_too_long)
+            return
+        }
+        val current = Job(source.start, source.text, { seconds ->
+            when {
+                rewrite && seconds < 2 -> ime.getString(R.string.zt_rewrite_working)
+                rewrite -> ime.getString(R.string.zt_rewrite_working_time, seconds)
+                seconds < 2 -> ime.getString(R.string.zt_proofread_working)
+                else -> ime.getString(R.string.zt_proofread_working_time, seconds)
+            }
+        }, ime.getString(if (rewrite) R.string.zt_rewrite_done else R.string.zt_proofread_done))
+        job = current
+        state = State.WORKING
+        workingSince = SystemClock.elapsedRealtime()
+        showBar()
+        handler.removeCallbacks(tick)
+        tick.run()
+        val mySession = ++session
+        ime.ztCancelSentenceCompletion()
+        askedAssist = true
+        assist.ask(task, source.text) { result ->
+            if (mySession != session) return@ask
+            handler.removeCallbacks(tick)
+            if (result is AssistWriting.Result.Failed) {
+                close()
+                // ZT Assist cannot do it (no model in it yet, too old): the keyboard's own
+                // model proofreads as it did before, when there is one.
+                if (!rewrite && result.failure.ownModelCanTry && ownModel() != null) startProofread()
+                else toast(assistFailureText(result.failure, rewrite))
+                return@ask
+            }
+            val answer = (result as AssistWriting.Result.Answer).text
+            val fixed = AssistWriting.clean(task, source.text, answer)
+            if (fixed == null) {
+                close()
+                toast(if (rewrite) R.string.zt_rewrite_failed else R.string.zt_proofread_failed)
+                return@ask
+            }
+            if (!holds(current.start, current.original)) {
+                close()
+                toast(R.string.zt_translate_text_changed)
+                return@ask
+            }
+            if (fixed == current.original) {
+                close()
+                toast(if (rewrite) R.string.zt_rewrite_nothing_to_change else R.string.zt_proofread_nothing_to_fix)
+                return@ask
+            }
+            finish(current, fixed)
+        }
+    }
+
+    private fun assistFailureText(failure: AssistWriting.Failure, rewrite: Boolean): Int = when (failure) {
+        AssistWriting.Failure.NOT_INSTALLED -> R.string.zt_assist_not_installed
+        AssistWriting.Failure.NO_MODEL -> R.string.zt_assist_no_model
+        AssistWriting.Failure.LOAD_FAILED -> R.string.zt_assist_load_failed
+        AssistWriting.Failure.NEEDS_UPDATE -> R.string.zt_assist_needs_update
+        AssistWriting.Failure.STOPPED -> R.string.zt_assist_stopped
+        AssistWriting.Failure.FAILED -> if (rewrite) R.string.zt_rewrite_failed else R.string.zt_proofread_failed
     }
 
     /** True while the keyboard types a translation (or its undo) itself. */

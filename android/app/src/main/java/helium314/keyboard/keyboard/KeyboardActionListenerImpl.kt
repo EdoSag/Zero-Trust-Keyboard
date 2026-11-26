@@ -134,6 +134,11 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onProofreadKey()
                 return
             }
+            KeyCode.ZT_REWRITE -> {
+                // ZT Keyboard: reword the text so it reads better, with ZT Assist on the phone.
+                if (!(Settings.getValues().mIsLocked)) latinIME.translateTyping.onRewriteKey()
+                return
+            }
             KeyCode.ZT_INSERT -> {
                 // ZT Keyboard: pick a text in another Zero-Trust app and type it here.
                 if (!(Settings.getValues().mIsLocked))

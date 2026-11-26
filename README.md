@@ -17,7 +17,9 @@ Keyboard**. Part of the [Zero-Trust suite](https://zerotrust.bz).
 - **Translate** what you wrote, on the phone (Firefox's Bergamot engine and
   Mozilla's models).
 - **Writing help** (off by default): Proofread, and "Finish my sentence",
-  with a small language model that runs on the phone.
+  with a small language model that runs on the phone. With ZT Assist on the
+  phone, Proofread uses its larger model (better in Hebrew) and a Rewrite
+  key rewords what you wrote.
 - **Emoji search and emoji names** in Hebrew and English, with nothing to
   download.
 - **Codes typed for you:** one-time codes from text messages, and codes
@@ -212,6 +214,18 @@ default, switch it on in Settings > Toolbar) fixes spelling and grammar of the t
 field, or the selected part, and offers Undo; "Finish my sentence" (off by default) offers
 the next few words above the keyboard after a short pause in typing. Neither runs in password
 fields, in incognito mode or while the phone is locked.
+
+Where ZT Assist (`dev.sagron.zerotrustassist`) is on the phone, the keyboard can hand a text
+to it instead (`android/app/src/main/java/dev/sagron/zerotrustkeyboard/assist/`): the
+Proofread key then uses ZT Assist's larger model (Settings > Writing help > Proofread with
+ZT Assist, on by default), and falls back to the keyboard's own model when ZT Assist has no
+model yet. The Rewrite key (off by default, Settings > Toolbar) has ZT Assist reword the text
+so it reads better; it needs ZT Assist. `AssistClient.kt` is the keyboard's own client of ZT
+Assist's answering service, the same protocol as `packages/zt_assist` in Zero-Trust-Core:
+messages over a bound service, protocol 1. It sends nothing unless the app under that name is
+signed with the keyboard's key, and ZT Assist checks the keyboard the same way. The text
+stays on the phone and is not kept; in incognito mode it is not handed over at all. An answer
+that was cut short, or written for a part of the text only, never replaces the text.
 
 HeliBoard's settings migrations are keyed to its own version codes; `UPSTREAM_VERSION_CODE`
 in `android/app/build.gradle.kts` must be raised when taking a newer HeliBoard release.

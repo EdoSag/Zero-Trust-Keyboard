@@ -162,6 +162,10 @@ SPDX-License-Identifier: Apache-2.0 AND GPL-3.0-only
             <action android:name="bz.zerotrust.action.PICK_TEXT" />
         </intent>
 
+        <!-- To see that ZT Assist is on the phone and reach its answering service
+             (Proofread and Rewrite). Nothing leaves the phone. -->
+        <package android:name="dev.sagron.zerotrustassist" />
+
         <!-- To detect names of installed apps -->
         <intent>
             <action android:name="android.intent.action.MAIN" />
