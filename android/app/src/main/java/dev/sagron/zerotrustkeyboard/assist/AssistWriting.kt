@@ -111,7 +111,7 @@ object AssistWriting {
      * instead of working on it.
      */
     fun clean(task: Task, original: String, answer: String?): String? {
-        val plain = unfenced(answer ?: return null)
+        val plain = unfenced(original, answer ?: return null)
         return when (task) {
             // The same checks as for the keyboard's own model.
             Task.PROOFREAD -> WritingPrompts.cleanProofread(original, plain)
@@ -119,10 +119,11 @@ object AssistWriting {
         }
     }
 
-    // The model may wrap its whole answer in a code block (``` ... ```).
-    private fun unfenced(answer: String): String {
+    // The model may wrap its whole answer in a code block (``` ... ```). A text that was a
+    // code block to begin with keeps its marks: they are the user's, not the model's.
+    private fun unfenced(original: String, answer: String): String {
         val text = answer.trim()
-        if (!text.startsWith("```") || !text.endsWith("```") || text.length < 7) return text
+        if (!fenced(text) || fenced(original.trim())) return text
         val inside = text.substring(3, text.length - 3)
         // The word after the opening marks ("text", "markdown") is not part of the answer.
         val firstBreak = inside.indexOf('\n')
@@ -130,6 +131,8 @@ object AssistWriting {
         val body = if (label != null && label in FENCE_LABELS) inside.substring(firstBreak + 1) else inside
         return body.trim()
     }
+
+    private fun fenced(text: String) = text.length >= 7 && text.startsWith("```") && text.endsWith("```")
 
     private val FENCE_LABELS = setOf("", "text", "txt", "plaintext", "markdown", "md")
 

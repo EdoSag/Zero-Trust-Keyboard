@@ -85,6 +85,15 @@ class AssistWritingTest {
         assertEquals("Use ``` for code", AssistWriting.clean(proofread, "use ``` for code", "Use ``` for code"))
     }
 
+    @Test fun aTextThatIsACodeBlockItselfKeepsItsMarks() {
+        val block = "```text\nThis sentence is already correct.\n```"
+        assertEquals(block, AssistWriting.clean(proofread, block, block))
+        assertEquals(
+            "```\nI have a dog.\n```",
+            AssistWriting.clean(rewrite, "```\ni has a dog\n```", "```\nI have a dog.\n```"),
+        )
+    }
+
     @Test fun aRewriteMayBeShorterOrLonger() {
         val long = "so basically what i wanted to say is that i think we should maybe meet tomorrow if that works"
         assertEquals(
