@@ -128,6 +128,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.TRANSLATE -> R.drawable.ic_translate
                     ToolbarKey.ZT_INSERT -> R.drawable.ic_zt_insert
                     ToolbarKey.ZT_PROOFREAD -> R.drawable.ic_zt_writing
+                    ToolbarKey.ZT_REWRITE -> R.drawable.ic_zt_rewrite
                     ToolbarKey.CLIPBOARD -> R.drawable.sym_keyboard_clipboard_holo
                     ToolbarKey.NUMPAD -> R.drawable.sym_keyboard_numpad_key_holo
                     ToolbarKey.DPAD -> R.drawable.ic_dpad
@@ -195,6 +196,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.TRANSLATE -> R.drawable.ic_translate
                     ToolbarKey.ZT_INSERT -> R.drawable.ic_zt_insert
                     ToolbarKey.ZT_PROOFREAD -> R.drawable.ic_zt_writing
+                    ToolbarKey.ZT_REWRITE -> R.drawable.ic_zt_rewrite
                     ToolbarKey.CLIPBOARD -> R.drawable.sym_keyboard_clipboard_lxx
                     ToolbarKey.NUMPAD -> R.drawable.sym_keyboard_numpad_key_lxx
                     ToolbarKey.DPAD -> R.drawable.ic_dpad
@@ -262,6 +264,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.TRANSLATE -> R.drawable.ic_translate
                     ToolbarKey.ZT_INSERT -> R.drawable.ic_zt_insert
                     ToolbarKey.ZT_PROOFREAD -> R.drawable.ic_zt_writing
+                    ToolbarKey.ZT_REWRITE -> R.drawable.ic_zt_rewrite
                     ToolbarKey.CLIPBOARD -> R.drawable.sym_keyboard_clipboard_rounded
                     ToolbarKey.NUMPAD -> R.drawable.sym_keyboard_numpad_key_lxx
                     ToolbarKey.DPAD -> R.drawable.ic_dpad_rounded

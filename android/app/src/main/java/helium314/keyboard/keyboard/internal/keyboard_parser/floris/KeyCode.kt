@@ -189,6 +189,8 @@ object KeyCode {
     const val ZT_INSERT =                 -10056
     /** ZT Keyboard: fix spelling and grammar of the text in the field, with the language model on the phone. */
     const val ZT_PROOFREAD =              -10057
+    /** ZT Keyboard: reword the text in the field so it reads better, with ZT Assist on the phone. */
+    const val ZT_REWRITE =                -10058
 
     // Valid in popups and for toolbar key long press only
     const val KEY_REPEAT =                -11000
@@ -217,6 +219,7 @@ object KeyCode {
         TIMESTAMP, CTRL_LEFT, CTRL_RIGHT, ALT_LEFT, ALT_RIGHT, META_LEFT, META_RIGHT, SEND_INTENT_ONE, SEND_INTENT_TWO,
         SEND_INTENT_THREE, EMOJI_SEARCH, INLINE_EMOJI_SEARCH_DONE, META_LOCK,
         BACKGROUND_GATHERING, BACKGROUND_GATHERING_TEMP_OFF, DPAD, TRANSLATE, ZT_INSERT, ZT_PROOFREAD,
+        ZT_REWRITE,
         -> this
 
         KEY_REPEAT if (longPress) -> this
@@ -346,7 +349,8 @@ object KeyCode {
     }
 
     @JvmStatic fun isIsBlockedWhenLocked(keyCode: Int) = when (keyCode) {
-        SETTINGS, TOGGLE_FLOATING_WINDOW, CLIPBOARD, CLIPBOARD_PASTE, TRANSLATE, ZT_INSERT, ZT_PROOFREAD -> true
+        SETTINGS, TOGGLE_FLOATING_WINDOW, CLIPBOARD, CLIPBOARD_PASTE, TRANSLATE, ZT_INSERT, ZT_PROOFREAD,
+        ZT_REWRITE -> true
         else -> false
     }
 }

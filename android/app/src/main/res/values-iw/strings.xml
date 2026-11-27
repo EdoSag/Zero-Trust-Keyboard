@@ -685,4 +685,26 @@
     <string name="zt_writing_not_a_model">"הקובץ הזה אינו מודל שפה בפורמט GGUF"</string>
     <string name="zt_writing_copy_failed">"לא ניתן היה להעתיק את הקובץ"</string>
     <string name="zt_writing_privacy">"עזרה בכתיבה לעולם לא פועלת בשדות סיסמה, במצב גלישה בסתר או כשהטלפון נעול."</string>
+    <string name="zt_rewrite" tools:keep="@string/zt_rewrite">"ניסוח מחדש"</string>
+    <string name="zt_rewrite_working">"מנסח מחדש…"</string>
+    <string name="zt_rewrite_working_time">"מנסח מחדש… %d ש׳"</string>
+    <string name="zt_rewrite_done">"נוסח מחדש"</string>
+    <string name="zt_rewrite_nothing">"אין מה לנסח מחדש"</string>
+    <string name="zt_rewrite_nothing_to_change">"ZT Assist השאיר את הטקסט כמו שהוא"</string>
+    <string name="zt_rewrite_too_long">"הטקסט ארוך מדי לניסוח מחדש בבת אחת. יש לבחור חלק ממנו."</string>
+    <string name="zt_rewrite_not_here">"סיסמאות לא עוברות ניסוח מחדש"</string>
+    <string name="zt_rewrite_not_incognito">"ניסוח מחדש כבוי במצב גלישה בסתר"</string>
+    <string name="zt_rewrite_needs_assist">"ניסוח מחדש דורש את האפליקציה ZT Assist בטלפון הזה"</string>
+    <string name="zt_rewrite_failed">"הניסוח מחדש נכשל, יש לנסות שוב"</string>
+    <string name="zt_assist_not_installed">"ZT Assist לא מותקן בטלפון הזה"</string>
+    <string name="zt_assist_no_model">"ב־ZT Assist עדיין אין מודל. יש לפתוח את ZT Assist ולהוריד מודל."</string>
+    <string name="zt_assist_load_failed">"ZT Assist לא הצליח לטעון את המודל. יש לסגור כמה אפליקציות ולנסות שוב."</string>
+    <string name="zt_assist_needs_update">"יש לעדכן את ZT Assist כדי להשתמש בזה"</string>
+    <string name="zt_assist_stopped">"ZT Assist נעצר, יש לנסות שוב"</string>
+    <string name="zt_writing_assist">"ZT Assist"</string>
+    <string name="zt_writing_assist_here">"ZT Assist מותקן בטלפון הזה. המודל הגדול יותר שלו יכול להגיה בשביל המקלדת, ומקש הניסוח מחדש (מפעילים אותו בהגדרות, סרגל כלים) מנסח איתו מחדש את מה שנכתב כך שייקרא טוב יותר. הטקסט עובר ל־ZT Assist בטלפון הזה ולא לשום מקום אחר, ולא נשמר. לא במצב גלישה בסתר."</string>
+    <string name="zt_writing_assist_missing">"עם האפליקציה ZT Assist בטלפון הזה, מקש ההגהה מקבל מודל גדול יותר שטוב יותר בעברית, ומקש ניסוח מחדש יכול לנסח מחדש את מה שנכתב. את ZT Assist מורידים מ־zerotrust.bz."</string>
+    <string name="zt_writing_assist_untrusted">"אפליקציה בטלפון הזה משתמשת בשם של ZT Assist אבל אינה חתומה על ידי Zero-Trust, ולכן המקלדת לא משתמשת בה."</string>
+    <string name="zt_writing_use_assist">"הגהה עם ZT Assist"</string>
+    <string name="zt_writing_use_assist_summary">"טוב יותר, בעיקר בעברית, אבל איטי יותר. כשעדיין אין מודל ב־ZT Assist, נעשה שימוש במודל של המקלדת."</string>
 </resources>

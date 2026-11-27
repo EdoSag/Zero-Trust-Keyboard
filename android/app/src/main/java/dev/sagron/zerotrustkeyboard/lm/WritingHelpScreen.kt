@@ -24,6 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
+import dev.sagron.zerotrustkeyboard.assist.AssistClient
+import dev.sagron.zerotrustkeyboard.assist.AssistWriting
 import dev.sagron.zerotrustkeyboard.voice.VoiceDownloader
 import dev.sagron.zerotrustkeyboard.voice.VoiceOffer
 import helium314.keyboard.latin.R
@@ -41,12 +43,15 @@ import java.util.Locale
 /**
  * Settings > Writing help: the small language model on the phone (download, add from a file,
  * remove) and what it is used for: the Proofread key, and finishing the sentence being typed.
+ * Also whether the Proofread key uses ZT Assist's larger model where that app is on the phone.
  */
 @Composable
 fun WritingHelpScreen(onClickBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var model by remember { mutableStateOf(LanguageModels.installed(context)) }
+    // Looked up when the screen opens: ZT Assist is not installed while it is showing.
+    val assist = remember { AssistClient.presence(context) }
     var copiedMegabytes by remember { mutableIntStateOf(-1) }
     var error by remember { mutableStateOf<Int?>(null) }
     var toDownload by remember { mutableStateOf<VoiceOffer?>(null) }
@@ -98,6 +103,27 @@ fun WritingHelpScreen(onClickBack: () -> Unit) {
                     key = LanguageModels.PREF_FINISH_SENTENCES,
                     default = LanguageModels.DEFAULT_FINISH_SENTENCES,
                 )
+
+                PreferenceCategory(stringResource(R.string.zt_writing_assist))
+                Text(
+                    stringResource(
+                        when (assist) {
+                            AssistWriting.Presence.READY -> R.string.zt_writing_assist_here
+                            AssistWriting.Presence.UNTRUSTED -> R.string.zt_writing_assist_untrusted
+                            AssistWriting.Presence.NOT_INSTALLED -> R.string.zt_writing_assist_missing
+                        }
+                    ),
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                if (assist == AssistWriting.Presence.READY) {
+                    SwitchPreference(
+                        name = stringResource(R.string.zt_writing_use_assist),
+                        description = stringResource(R.string.zt_writing_use_assist_summary),
+                        key = AssistWriting.PREF_USE_ASSIST,
+                        default = AssistWriting.DEFAULT_USE_ASSIST,
+                    )
+                }
 
                 PreferenceCategory(stringResource(R.string.zt_writing_model))
                 val current = model
